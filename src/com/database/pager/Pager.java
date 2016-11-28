@@ -219,7 +219,6 @@ public class Pager {
 	 * 读取所有表数据 
 	 * @param path 写入的目录路径
 	 * @param tableName	表名
-	 * @param row	写入的每一行的行数据
 	 * @return 表的所有行
 	 */
 	public List<String> readTable(String path, String tableName){
@@ -273,7 +272,6 @@ public class Pager {
 	 * 读取表元数据
 	 * @param path 写入的目录路径
 	 * @param tableName	表名
-	 * @param row	写入的每一行的行数据
 	 * @return 表的所有行
 	 */
 	public List<String> readMeata(String path, String tableName){
