@@ -1,7 +1,5 @@
 package com.database.parse;
 
-import com.sun.org.apache.bcel.internal.generic.Select;
-import com.sun.xml.internal.bind.v2.schemagen.xmlschema.Union;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -10,7 +8,6 @@ import net.sf.jsqlparser.expression.operators.relational.*;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

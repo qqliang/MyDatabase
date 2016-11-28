@@ -20,12 +20,11 @@ public class testParser{
         }catch (Exception e){
             e.printStackTrace();
         }
-
-	/*
-	now you should use a class that implements StatementVisitor to decide what to do
-	based on the kind of the statement, that is SELECT or INSERT etc. but here we are only
-	interested in SELECTS
-	*/
+        /*
+        now you should use a class that implements StatementVisitor to decide what to do
+        based on the kind of the statement, that is SELECT or INSERT etc. but here we are only
+        interested in SELECTS
+        */
         if (statement instanceof Select) {
             Select selectStatement = (Select) statement;
             TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
@@ -35,7 +34,5 @@ public class testParser{
                 System.out.println("表："+table);
             }
         }
-
-
     }
 }
