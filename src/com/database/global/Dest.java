@@ -1,4 +1,4 @@
-package com.db.status;
+package com.database.global;
 /**
  * 操作目标
  * 表、数据库、索引、视图

@@ -1,4 +1,4 @@
-package com.db.pager;
+package com.database.pager;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

@@ -1,4 +1,4 @@
-package com.db.status;
+package com.database.global;
 /**
  * 操作类型
  * @author zoe
