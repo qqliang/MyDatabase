@@ -29,7 +29,7 @@ public class Dest {
 	public final static short DOUBLE=6;
 	public final static short CHAR=7;
 	public final static short BOOLEAN=8;
-	
+	public final static short STRING=9;	
 	//定义基本数据类型长度
 	
 	public final static short BYTE_LENGTH=1;
@@ -40,6 +40,7 @@ public class Dest {
 	public final static short DOUBLE_LENGTH=8;
 	public final static short CHAR_LENGTH=2;
 	public final static short BOOLEAN_LENGTH=1;
+	public final static short STRING_LENGTH=20;
 	
 	
 	
