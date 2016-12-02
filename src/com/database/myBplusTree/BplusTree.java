@@ -18,9 +18,14 @@ package com.database.myBplusTree;
  * 8.为所有叶子结点增加一个链指针；
  * 9.所有关键字都在叶子结点出现
  */
+import com.database.global.Databases;
+import com.database.pager.Pager;
+
 import java.util.*;
 
 public class BplusTree{
+
+    Databases db ;
 
     /** 根节点 */
     protected BplusNode root;
@@ -79,7 +84,7 @@ public class BplusTree{
 
     }
 
-    public BplusTree(int order) {
+    public BplusTree(int order,Databases db) {
         if (order < 3) {
             System.out.print("order must be greater than 2");
             System.exit(0);
@@ -87,82 +92,41 @@ public class BplusTree{
         this.order = order;
         root = new BplusNode(true, true);
         head = root;
+        this.db = db;
     }
 
-    public static void Remove(Integer[] key, List<String> value, int order) {
-        BplusTree tree = new BplusTree(order);
-        System.out.println("\nTest random remove " + key.length + " datas, of order:"
-                + order);
-        boolean[] a = new boolean[key.length + 10];
-        List<Integer> list = new ArrayList<Integer>();
-        System.out.println("Begin random insert...");
-        for (int i = 0; i < key.length; i++) {
-            Integer key1 = key[i];
-            String value1 = value.get(i);
-            a[key1] = true;
-            list.add(key1);
-            tree.insertOrUpdate(key1, value1);
+    public String Remove(Integer key) {
+        System.out.print("开始删除!");
+        String result = remove(key);
+        if (result == null) {
+            return "未找到对象";
+        } else {
+            return "删除对象："+result;
         }
-        System.out.println("Begin random remove...");
-        long current = System.currentTimeMillis();
-        int key2;
-        for (int j = 0; j < key.length; j++) {
-            key2 = list.get(j);
-            if (a[key2]) {
-                if (tree.remove(key2) == null) {
-                    System.err.println("得不到数据:" + key2);
-                    break;
-                } else {
-                    a[key2] = false;
-                }
-            }
-        }
-        long duration = System.currentTimeMillis() - current;
-        System.out.println("time elpsed for duration: " + duration);
-        System.out.println(tree.getHeight());
+
+
     }
 
-    public static void Search(Integer[] key,List<String> value, int order) {
-        BplusTree tree = new BplusTree(order);
-        System.out.println("\nTest random search " + key.length + " datas, of order:"
-                + order);
-        boolean[] a = new boolean[key.length + 10];
-        System.out.println("Begin random insert...");
-        for (int i = 0; i < key.length; i++) {
-            Integer key1 = key[i];
-            String value1 = value.get(i);
-            a[key1] = true;
-            tree.insertOrUpdate(key1, value1);
+    public String Search(Integer key) {
+        System.out.println("开始查询");
+        String result = get(key);
+        if (result == null) {
+            return "未找到对象";
+        }else{
+            return result;
         }
-        System.out.println("Begin random search...");
-        long current = System.currentTimeMillis();
-        for (int j = 0; j < key.length; j++) {
-            Integer key1 = key[j];
-            String value1 = value.get(j);
-            if (a[key1]) {
-                if (tree.get(key1) == null) {
-                    System.err.println("得不到数据:" + key1);
-                    break;
-                }
-            }
-        }
-        long duration = System.currentTimeMillis() - current;
-        System.out.println("time elpsed for duration: " + duration);
     }
 
-    public static void Insert(Integer[] key,List<String> value, int order) {
-        BplusTree tree = new BplusTree(order);
-        System.out.println("\nTest random insert " + key.length + " datas, of order:"
-                + order);
-        long current = System.currentTimeMillis();
-        for (int i=0;i<key.length;i++) {
-            Integer key1 = key[i];
-            String value1 = value.get(i);
-            tree.insertOrUpdate(key1, value1);
-        }
-        long duration = System.currentTimeMillis() - current;
-        System.out.println("time elpsed for duration: " + duration);
+    public void Insert(Integer key,String value) {
+        System.out.println("开始插入!");
 
-        System.out.println(tree.getHeight());
+        insertOrUpdate(key, value);
+
+        Pager pager = new Pager();
+        BplusNode node = getHead();
+        while (node!=null){
+            pager.writeTable(db.getFile(), "test",node.entries.toString());
+            node = node.next;
+        }
     }
 }
