@@ -100,6 +100,20 @@ public class CRUD {
         return results;
     }
 
+    public static String[] delete(String str){
+        String sql[]=StringToSql(str);
+        if(sql[0].equals("delete") || sql[1].equals("DELETE")){
+            results[0]="23";
+            results[1]=sql[2]; // 表名
+            results[2]=str.substring(str.indexOf("where")+6,str.length()); // 删除条件
+
+        }else{
+            results[0] = "0";
+            results[1] = "不是标准的SQL语句";
+        }
+        return results;
+    }
+
     public static void main(String[] args) {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         try {
@@ -112,7 +126,8 @@ public class CRUD {
 
         //String result[]=create(str);
         //String result[]=insert(str);
-        String result[]=select(str);
+        //String result[]=select(str);
+        String result[]=delete(str);
         for(int i=0;i<result.length;i++){
             System.out.println(result[i]);
         }
