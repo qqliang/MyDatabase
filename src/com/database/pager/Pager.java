@@ -26,7 +26,7 @@ public class Pager {
 		
 		if(path != null && path.length() > 0 ){
 			dir = path;
-			file = new File(dir, fileName);
+			file = new File(dir, fileName+".txt");
 		}else{
 			file = new File(fileName);
 		}
