@@ -18,14 +18,12 @@ package com.database.myBplusTree;
  * 8.为所有叶子结点增加一个链指针；
  * 9.所有关键字都在叶子结点出现
  */
-import com.database.global.Databases;
+import com.database.global.Database;
 import com.database.pager.Pager;
-
-import java.util.*;
 
 public class BplusTree{
 
-    Databases db ;
+    Database db ;
 
     /** 根节点 */
     protected BplusNode root;
@@ -84,7 +82,7 @@ public class BplusTree{
 
     }
 
-    public BplusTree(int order,Databases db) {
+    public BplusTree(int order,Database db) {
         if (order < 3) {
             System.out.print("order must be greater than 2");
             System.exit(0);
@@ -125,7 +123,7 @@ public class BplusTree{
         Pager pager = new Pager();
         BplusNode node = getHead();
         while (node!=null){
-            pager.writeTable(db.getDBFile(), "test",node.entries.toString());
+            pager.writeTable(db.getDBFile(), db.getTableName(),node.entries.toString());
             node = node.next;
         }
     }

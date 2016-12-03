@@ -6,7 +6,7 @@ import com.database.queryExecute.Execute;
 
 import java.io.File;
 
-public class Databases {
+public class Database {
 
 	private String dbName; //数据库名称
 	private int stat; //数据库状态，打开为1，关闭为0
@@ -15,21 +15,21 @@ public class Databases {
 	private static String path = "D:/db";//根目录
 
 	private File dbFile = null;//数据库文件
-	private String tableFile = null;//表文件
+	private String tableName = null;//表名称
 
 	//构造函数
-	public Databases(String dbName){
+	public Database(String dbName){
 		tree = new BplusTree(3,this);
 		this.dbName = dbName;
 		setStat(1);
 	}
-	public Databases(){}
+	public Database(){}
 
-	public String getTableFile() {
-		return tableFile;
+	public String getTableName() {
+		return tableName;
 	}
-	public void setTableFile(String tableFile) {
-		this.tableFile = tableFile;
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
 	}
 	public void setDBName(String dbName) { this.dbName = dbName; }
 	public String getDBName() {
