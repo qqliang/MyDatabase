@@ -113,8 +113,8 @@ public class Databases {
 	public void setStat(int stat) {
 		this.stat = stat;
 	}
-	public String getDBFile(){
-		return this.dbFile.getAbsolutePath();
+	public File getDBFile(){
+		return this.dbFile;
 	}
 	public void setDBFile(File dbFile){
 		this.dbFile = dbFile;
