@@ -7,50 +7,73 @@ import com.database.queryExecute.Execute;
 import java.io.File;
 
 public class Databases {
-	
-	public String name;
-	public int stat;
-	public BplusTree tree;
-	static String path = "d:";
-	static File file = null;
 
-	public String getOpenFile() {
-		return openFile;
-	}
+	private String dbName; //数据库名称
+	private int stat; //数据库状态，打开为1，关闭为0
+	private BplusTree tree; //数据库B树
 
-	public void setOpenFile(String openFile) {
-		this.openFile = openFile;
-	}
+	private static String path = "D:/db";//根目录
 
-	public String openFile = null;
+	private File dbFile = null;//数据库文件
+	private String tableFile = null;//表文件
 
-	public Databases(String name){
+	//构造函数
+	public Databases(String dbName){
 		tree = new BplusTree(3,this);
-		this.name = name;
+		this.dbName = dbName;
 		setStat(1);
 	}
 	public Databases(){}
 
-	public String getName() {
-		return name;
+	public String getTableFile() {
+		return tableFile;
 	}
+	public void setTableFile(String tableFile) {
+		this.tableFile = tableFile;
+	}
+	public void setDBName(String dbName) { this.dbName = dbName; }
+	public String getDBName() {
+		return dbName;
+	}
+	public BplusTree getTree() {
+		return tree;
+	}
+	public void setTree(BplusTree tree) {
+		this.tree = tree;
+	}
+
 	public int getStat() {
 		return stat;
 	}
 	public void setStat(int stat) {
 		this.stat = stat;
 	}
-	public String getFile(){return this.file.getAbsolutePath();}
+	public String getDBFile(){
+		return this.dbFile.getAbsolutePath();
+	}
+	public void setDBFile(File dbFile){
+		this.dbFile = dbFile;
+	}
 
-	public int openDB(String filename){
-		file = new File(path + "/" + filename);
-		if (!file.exists()) {
-			return 0;
+	/**
+	 * 根据数据库名称，打开数据库
+	 * @param dbName
+	 * @return 打开成功为1，否则为0
+	 */
+	public int openDB(String dbName){
+		dbFile = new File(path + "/" + dbName);
+		if (!dbFile.exists()) {
+			return 0;//打开不成功
 		}else{
 			setStat(1);
-			return 1;
+			return 1;//打开成功
 		}
 	}
+
+	/**
+	 * sql语句的执行
+	 * @param sql
+	 */
 	public void exeSQL(String sql){
 		String result[] = CRUD.parser(sql);
 		Execute execute = new Execute(this);

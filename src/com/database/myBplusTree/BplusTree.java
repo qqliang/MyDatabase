@@ -125,7 +125,7 @@ public class BplusTree{
         Pager pager = new Pager();
         BplusNode node = getHead();
         while (node!=null){
-            pager.writeTable(db.getFile(), "test",node.entries.toString());
+            pager.writeTable(db.getDBFile(), "test",node.entries.toString());
             node = node.next;
         }
     }

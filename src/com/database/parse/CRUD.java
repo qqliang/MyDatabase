@@ -33,7 +33,7 @@ public class CRUD {
         if (sql[0].equals("create") || sql[0].equals("CREATE")) {
             if (sql[1].equals("database") || sql[1].equals("DATABASE")) {
                 results[0] = "11";	// database 11
-                results[1] = database; //返回 数据库名
+                results[1] = sql[2]; //返回 数据库名
             }else if (sql[1].equals("table") || sql[1].equals("TABLE")) {
                 results[0]="10";	// table 10
                 results[1] = sql[2];	//表名
