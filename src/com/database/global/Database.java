@@ -9,7 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-public class Databases {
+public class Database {
 
 	private String dbName; 					//数据库名称
 	private int stat; 						//数据库状态，打开为1，关闭为0
@@ -21,7 +21,7 @@ public class Databases {
 	private File dbFile = null;				//数据库文件
 	private String tableFile = null;		//表文件
 
-	public Databases(String parentPath, String dbName)
+	public Database(String parentPath, String dbName)
 	{
 		tree = new BplusTree(3,this);
 
@@ -83,12 +83,12 @@ public class Databases {
 	}
 
 	//构造函数
-	public Databases(String dbName){
+	public Database(String dbName){
 		tree = new BplusTree(3,this);
 		this.dbName = dbName;
 		setStat(1);
 	}
-	public Databases(){}
+	public Database(){}
 
 	public String getTableFile() {
 		return tableFile;
