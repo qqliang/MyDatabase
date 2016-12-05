@@ -4,7 +4,9 @@ package com.database.global;
  * Created by zoe on 2016/12/2.
  */
 public class DataType {
-    public static byte INTEGER = 1;
-    public static byte LONG = 2;
-    public static byte TEXT = 3;
+    public final static byte TINY_INT = 1;
+    public final static byte SMALL_INT = 2;
+    public final static byte INTEGER = 4;
+    public final static byte TEXT = 5;
+    public final static byte LONG = 8;
 }
