@@ -1,7 +1,5 @@
 package com.database.pager;
 
-import com.database.global.ColumnConstraint;
-import com.database.global.DataType;
 
 /**
  * Created by zoe on 2016/12/2.
