@@ -1,0 +1,47 @@
+package com.database.main;
+
+import com.database.global.ColumnConstraint;
+import com.database.global.DataType;
+import com.database.pager.Column;
+import com.database.pager.Record;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by zoe on 2016/12/5.
+ */
+public class TestRecord {
+    public static void main(String[] args){
+        testCalculateSize();
+    }
+    public static void testCalculateSize(){
+        Record record = getRecord();
+        int size = record.calculateSize();
+        System.out.println(size);
+    }
+    public static Record getRecord(){
+        Record record = new Record();
+        List<Column> cols = new ArrayList<Column>();
+        Column idCol =  new Column();
+        idCol.setName("id");
+        idCol.setType(DataType.INTEGER);
+        idCol.setConstraint(ColumnConstraint.NONE);
+
+        Column nameCol =  new Column();
+        nameCol.setName("name");
+        nameCol.setType(DataType.TEXT);
+        nameCol.setConstraint(ColumnConstraint.NONE);
+
+        Column ageCol =  new Column();
+        ageCol.setName("age");
+        ageCol.setType(DataType.TINY_INT);
+        ageCol.setConstraint(ColumnConstraint.NONE);
+
+        cols.add(idCol);
+        cols.add(nameCol);
+        cols.add(ageCol);
+        record.setColumns(cols);
+        return record;
+    }
+}
