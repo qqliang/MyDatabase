@@ -5,82 +5,17 @@ import com.database.parse.CRUD;
 import com.database.queryExecute.Execute;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 public class Database {
 
-	private String dbName; 					//数据库名称
-	private int stat; 						//数据库状态，打开为1，关闭为0
-	private BplusTree tree; 				//数据库B树
-	private byte[] header ;
+	private String dbName; //数据库名称
+	private int stat; //数据库状态，打开为1，关闭为0
+	private BplusTree tree; //数据库B树
 
-	private static String path = "D:/db";	//根目录
+	private static String path = "D:/db";//根目录
 
-	private File dbFile = null;				//数据库文件
-	private String tableFile = null;		//表文件
-
-	public Database(String parentPath, String dbName)
-	{
-		tree = new BplusTree(3,this);
-
-		this.dbName = dbName;
-		File dir = new File(parentPath);
-		File file = null;
-
-		/**
-		 * 如果给定目录不存在，将数据库创建在当前目录下
-		 */
-		if (!dir.isDirectory()) {
-			dir = null;
-		}
-		if (dir != null) {
-			file = new File(dir, dbName);
-		} else {
-			file = new File(dbName);
-		}
-
-		this.dbFile = file;
-		setStat(1);
-	}
-	/**
-	 * 读取数据库头信息
-	 * @return
-	 */
-	public byte[] getHeader()
-	{
-		if(this.header != null){
-			return header;
-		}
-
-		if(this.dbFile == null)
-			return null;
-		FileInputStream fis = null;
-
-		try{
-
-			fis = new FileInputStream(this.dbFile);
-			this.header = new byte[100];
-			fis.read(header,0,100);
-
-		}catch(FileNotFoundException e){
-			e.printStackTrace();
-		}catch(IOException e){
-			e.printStackTrace();
-		}finally {
-			try{
-				if(fis != null) fis.close();
-			}catch (IOException e){
-				e.printStackTrace();
-			}
-		}
-
-		return header;
-	}
-	public void setHeader(byte[] header){
-		this.header = header;
-	}
+	private File dbFile = null;//数据库文件
+	private String tableName = null;//表名称
 
 	//构造函数
 	public Database(String dbName){
@@ -90,11 +25,11 @@ public class Database {
 	}
 	public Database(){}
 
-	public String getTableFile() {
-		return tableFile;
+	public String getTableName() {
+		return tableName;
 	}
-	public void setTableFile(String tableFile) {
-		this.tableFile = tableFile;
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
 	}
 	public void setDBName(String dbName) { this.dbName = dbName; }
 	public String getDBName() {
@@ -113,8 +48,8 @@ public class Database {
 	public void setStat(int stat) {
 		this.stat = stat;
 	}
-	public File getDBFile(){
-		return this.dbFile;
+	public String getDBFile(){
+		return this.dbFile.getAbsolutePath();
 	}
 	public void setDBFile(File dbFile){
 		this.dbFile = dbFile;

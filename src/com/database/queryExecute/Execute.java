@@ -6,10 +6,10 @@ import com.database.myBplusTree.BplusTree;
 
 public class Execute {
 	private static String path = "D:/db";//根目录
-	private Databases db;
+	private Database db;
 
 	//构造函数
-	public Execute (Databases db){
+	public Execute (Database db){
 		this.db = db;
 	}
 	public Execute (){}
@@ -76,6 +76,7 @@ public class Execute {
 			}else{
 				String value = param[2].substring(param[2].indexOf('(')+1,param[2].indexOf(')'));
 				int id=Integer.parseInt(value.split(",")[0]);
+				db.setTableName(param[1]);
 				db.getTree().Insert(id,value);      //插入数据，id为主键，str为数据，例如  （1，“”）
 			}
 			break;
