@@ -2,11 +2,9 @@ package com.database.pager;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import com.database.global.*;
 
-import javax.xml.crypto.Data;
 
 public class Pager {
 	Database database;
@@ -20,6 +18,14 @@ public class Pager {
 		this.pCache = null;
 		this.pageNum = 2000;
 		initPages();
+	}
+
+	public Page[] getPages() {
+		return pages;
+	}
+
+	public void setPages(Page[] pages) {
+		this.pages = pages;
 	}
 
 	public int getPageNum() {
@@ -36,9 +42,13 @@ public class Pager {
 			Page page = new Page();
 			page.setData(new byte[SpaceAllocation.PAGE_SIZE]);
 			page.setPgno(i);
-			page.setOverflow(null);
+			page.setOverflowPgno(0);
+			page.setOverflowPage(null);
 			page.setSectorSize(SpaceAllocation.SECTOR_SIZE);
 			page.setSize(SpaceAllocation.PAGE_SIZE);
+			page.setOverflow(false);
+			page.setHasOverflow(false);
+			page.setOffset(SpaceAllocation.PAGE_SIZE);
 			pages[i] = page;
 		}
 	}
@@ -62,25 +72,8 @@ public class Pager {
 	 * @param data	要写入的数据，可以通过Record的getBytes方法可以简单得到
 	 */
 	public void writeData(int pgno, byte[] data){
-
-		File dbFile = new File(database.getDBFile());
 		Page page = this.pages[pgno];
 		page.fillData(data);
-		FileOutputStream fos = null;
-		try{
-			fos = new FileOutputStream(dbFile);
-			fos.write(page.getData());
-		}catch (FileNotFoundException e){
-			e.printStackTrace();
-		}catch (IOException e){
-			e.printStackTrace();
-		}finally {
-			try{
-				if(fos!=null)fos.close();
-			}catch (IOException e){
-				e.printStackTrace();
-			}
-		}
 	}
 	/**
 	 * 读取指定页面中的数据
@@ -185,6 +178,7 @@ public class Pager {
 
 		return cols;
 	}
+
 	/**
 	 * 为表添加数据
 	 * @param path 写入的目录路径
@@ -238,6 +232,69 @@ public class Pager {
 		return result;
 	}
 
+	/**
+	 * 刷新页面，写磁盘
+	 */
+	public void flush(){
+		RandomAccessFile raf = null;
+		try{
+			raf = new RandomAccessFile(this.database.getDBFile(),"rw");
+			raf.seek(0);
+			for(int i =0; i<this.pageNum;i++)
+			{
+				raf.write(this.pages[i].getData());
+			}
+
+		}catch (IOException e){
+			e.printStackTrace();
+		}finally {
+			try{
+				if(raf != null) raf.close();
+			}catch (IOException e){
+				e.printStackTrace();
+			}
+
+		}
+	}
+	public Page loadPage(int pgno){
+		if(pgno <= 0)
+			return null;
+		if(Utils.loadShortFromBytes(this.getPages()[pgno].getData(), 0) < SpaceAllocation.PAGE_HEADER_SIZE )
+			return this.pages[pgno];
+
+		RandomAccessFile raf = null;
+		Page newPage = null;
+		try{
+			raf = new RandomAccessFile(this.database.getDBFile(),"r");
+			raf.seek((pgno-1) * SpaceAllocation.PAGE_SIZE);
+
+			byte[] data = new byte[SpaceAllocation.PAGE_SIZE];
+			raf.read(data, 0 , SpaceAllocation.PAGE_SIZE);
+
+			newPage = new Page();
+			newPage.setSize(SpaceAllocation.PAGE_SIZE);
+			newPage.setSectorSize(SpaceAllocation.SECTOR_SIZE);
+			newPage.setData(data);
+			newPage.setOffset(Utils.loadShortFromBytes(data,0));
+			newPage.setOverflow(data[4]==1?true:false);
+			newPage.setHasOverflow(data[5]==1?true:false);
+			newPage.setOverflowPgno(Utils.loadIntFromBytes(data, 6));
+			newPage.setOverflowPage(loadPage(Utils.loadIntFromBytes(data, 6)));
+			newPage.setPgno(pgno);
+
+			this.pages[pgno] = newPage;
+			return newPage;
+		}catch (IOException e){
+			e.printStackTrace();
+		}finally {
+			try{
+				if(raf != null) raf.close();
+			}catch (IOException e){
+				e.printStackTrace();
+			}
+		}
+		return newPage;
+	}
 	public boolean writeTable(String path, String tableName, List<String> rows){
 		String dir = "";
 		String fileName = tableName;
@@ -388,9 +445,12 @@ public class Pager {
 			Page page = new Page();
 			page.setData(new byte[SpaceAllocation.PAGE_SIZE]);
 			page.setPgno(i);
-			page.setOverflow(null);
+			page.setOverflowPage(null);
 			page.setSectorSize(SpaceAllocation.SECTOR_SIZE);
 			page.setSize(SpaceAllocation.PAGE_SIZE);
+			page.setOffset(SpaceAllocation.PAGE_SIZE);
+			page.setHasOverflow(false);
+			page.setOverflow(false);
 			newPages[i] = page;
 		}
 
