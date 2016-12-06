@@ -7,9 +7,7 @@ import com.database.pager.Column;
 import com.database.pager.Pager;
 import com.database.pager.Record;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +16,25 @@ import java.util.List;
  */
 public class TestPager {
     public static void main(String[] args){
-        testRead();
+//        testRead();
+        testFlush();
+    }
+    public static void testFlush(){
+        Database database = new Database();
+        database.openDB("test2");
+        Pager pager = new Pager(database);
+        Record record = getRecord();
+
+        pager.writeData(1,record.getBytes("1,zhouyu,22"));
+        pager.writeData(1,record.getBytes("2,lqq,22"));
+        pager.writeData(1,record.getBytes("3,hh,26"));
+
+        pager.writeData(1,record.getBytes("4,dxr,27"));
+        pager.writeData(1,record.getBytes("5,yyc,27"));
+        pager.writeData(1,record.getBytes("6,whw,22"));
+
+        pager.flush();
+
     }
     public static void testRead(){
         Database database = new Database();
@@ -27,6 +43,9 @@ public class TestPager {
         Record record = getRecord();
 
         pager.writeData(1,record.getBytes("1,zhouyu,22"));
+        pager.writeData(1,record.getBytes("2,lqq,22"));
+        pager.writeData(1,record.getBytes("3,hh,26"));
+
         List<String> list = pager.readRecord(1);
         System.out.println(list.toString());
     }
@@ -37,8 +56,8 @@ public class TestPager {
         Record record = getRecord();
 
         pager.writeData(1,record.getBytes("1,zhouyu,22"));
-        pager.writeData(2,record.getBytes("2,lqq,22"));
-        pager.writeData(3,record.getBytes("3,hh,26"));
+        pager.writeData(1,record.getBytes("2,lqq,22"));
+        pager.writeData(1,record.getBytes("3,hh,26"));
     }
     public static Record getRecord() {
         Record record = new Record();
