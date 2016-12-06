@@ -399,10 +399,10 @@ public class Pager {
 
 	/**
 	 *	加载数据库文件中的数据。
-	 * @param dbPath 数据库路径名
 	 */
-	public void loadDB(String dbPath) {
-		if(dbPath == null || dbPath.isEmpty())
+	public void loadDB() {
+		String dbPath = this.database.getDBFile();
+		if(this.database == null || this.database.getDBFile()== null || this.database.getDBFile().isEmpty())
 			return;
 		FileInputStream fis = null;
 		try{
