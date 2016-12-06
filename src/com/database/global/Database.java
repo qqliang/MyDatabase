@@ -76,7 +76,10 @@ public class Database {
 	 */
 	public void exeSQL(String sql){
 		String result[] = CRUD.parser(sql);
-		Execute execute = new Execute(this);
-		execute.queryDo(result);
+		if(result[0] != "0" )
+		{
+			Execute execute = new Execute(this);
+			execute.queryDo(result);
+		}
 	}
 }
