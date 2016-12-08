@@ -1,12 +1,10 @@
 package com.database.queryExecute;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import com.database.global.*;
 import com.database.myBplusTree.BplusTree;
 import com.database.pager.Pager;
-import com.database.pager.Table;
 
 public class Execute {
 	private static String path = "D:/db";//根目录
@@ -16,7 +14,6 @@ public class Execute {
 	public Execute (Database db){
 		this.db = db;
 	}
-	public Execute (){}
 
 	//查询执行
 	public void queryDo(String[] param){
@@ -104,6 +101,7 @@ public class Execute {
 				String tableName = param[2];		//查询表名
 				BplusTree tree = db.getTableTreeByName(tableName);
 
+//				selectAll()
 				List<String> results = null;
 				if(value[0].equals("id"))
 				{
