@@ -101,7 +101,6 @@ public class Execute {
 				String tableName = param[2];		//≤È—Ø±Ì√˚
 				BplusTree tree = db.getTableTreeByName(tableName);
 
-//				selectAll()
 				List<String> results = null;
 				if(value[0].equals("id"))
 				{
