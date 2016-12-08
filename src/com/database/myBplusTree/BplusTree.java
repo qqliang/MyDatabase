@@ -21,50 +21,64 @@ package com.database.myBplusTree;
 import com.database.global.Database;
 import com.database.pager.Pager;
 
+import java.util.List;
+
 public class BplusTree{
 
-    Database db ;
+    Database db ;               //数据库对象
 
-    /** 根节点 */
-    protected BplusNode root;
+    protected BplusNode root;   //根节点
+    protected int order;        //阶数，M值
+    protected BplusNode head;   //叶子节点的链表头
+    protected int height = 0;   //树高
 
-    /** 阶数，M值 */
-    protected int order;
+    private int rowID = 0;      //行号
 
-    /** 叶子节点的链表头 */
-    protected BplusNode head;
+    /**
+     *构造函数
+     * 1、判断树阶是否大于等于3
+     * 2、创建根节点
+     * 3、树的head指针指向根节点
+     */
+    public BplusTree(int order,Database db) {
+        if (order < 3) {
+            System.out.print("order must be greater than 2");
+            System.exit(0);
+        }
+        this.order = order;
+        root = new BplusNode(db.getPager(),0);
+        head = root;
+        this.db = db;
+    }
 
-    /** 树高*/
-    protected int height = 0;
-
+    /** 获取/设置叶子链表的头节点 */
     public BplusNode getHead() {
         return head;
     }
-
     public void setHead(BplusNode head) {
         this.head = head;
     }
 
+    /** 获取/设置B+树的根节点 */
     public BplusNode getRoot() {
         return root;
     }
-
     public void setRoot(BplusNode root) {
         this.root = root;
     }
 
+    /** 获取/设置B+树的树阶 */
     public int getOrder() {
         return order;
     }
-
     public void setOrder(int order) {
         this.order = order;
     }
 
+    /** 获取/设置B+树的树高 */
     public void setHeight(int height) {
         this.height = height;
     }
-
     public int getHeight() {
         return height;
     }
@@ -79,19 +93,9 @@ public class BplusTree{
 
     public void insertOrUpdate(Integer key, String value) {
         root.insertOrUpdate(key, value, this);
-
     }
 
-    public BplusTree(int order,Database db) {
-        if (order < 3) {
-            System.out.print("order must be greater than 2");
-            System.exit(0);
-        }
-        this.order = order;
-        root = new BplusNode(true, true);
-        head = root;
-        this.db = db;
-    }
+
 
     public String Remove(Integer key) {
         System.out.print("开始删除!");
@@ -101,11 +105,13 @@ public class BplusTree{
         } else {
             return "删除对象："+result;
         }
-
-
     }
 
-    public String Search(Integer key) {
+    /**
+     * 通过rowid查找数据，则结果只有1个
+     */
+    public String SelectByKey(String value) {
+        Integer key = Integer.parseUnsignedInt(value);
         System.out.println("开始查询");
         String result = get(key);
         if (result == null) {
@@ -115,16 +121,35 @@ public class BplusTree{
         }
     }
 
-    public void Insert(Integer key,String value) {
-        System.out.println("开始插入!");
-
-        insertOrUpdate(key, value);
-
-        Pager pager = new Pager();
-        BplusNode node = getHead();
-        while (node!=null){
-            pager.writeTable(db.getDBFile(), db.getTableName(),node.entries.toString());
-            node = node.next;
-        }
+    /**
+     * 通过其他字段查找数据，则返回的结果可能有多个
+     */
+    public List<String> SelectByOther(String param, String value){
+        List<String> results = null;
+        BplusNode tempNode = head.getNext();
+        while(tempNode != null){
+            for(int i=0;i < tempNode.getEntries().size();i++){
+                String tempStr = tempNode.getEntries().get(i).getValue();
+                String tempValue[] = tempStr.split(",");
+                if(tempValue[1].equals(value)){
+                    results.add(tempStr);
+                }
+            }// end for
+            tempNode = tempNode.getNext();
+        }// end while
+        return results;
     }
+
+    /**
+     * 插入数据
+     * 1、获取rowid，执行插入
+     * 2、rowid自增
+     * @param value
+     */
+    public void Insert(String value) {
+        System.out.println("开始插入!");
+        insertOrUpdate(rowID, value);
+        rowID++;
+    }
+
 }
