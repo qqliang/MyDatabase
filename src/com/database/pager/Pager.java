@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import com.database.global.*;
+import javafx.geometry.Pos;
 
 
 public class Pager {
@@ -16,7 +17,7 @@ public class Pager {
 		this.database = database;
 //		this.journal = new File(this.database.getDBName()+"-journal");
 		this.pCache = null;
-		this.pageNum = 2000;
+		this.pageNum = 1000;
 		initPages();
 	}
 
@@ -43,11 +44,8 @@ public class Pager {
 			page.setData(new byte[SpaceAllocation.PAGE_SIZE]);
 			page.setPgno(i);
 			page.setOverflowPgno(0);
-			page.setOverflowPage(null);
 			page.setSectorSize(SpaceAllocation.SECTOR_SIZE);
 			page.setSize(SpaceAllocation.PAGE_SIZE);
-			page.setOverflow(false);
-			page.setHasOverflow(false);
 			page.setOffset(SpaceAllocation.PAGE_SIZE);
 			pages[i] = page;
 		}
@@ -87,6 +85,61 @@ public class Pager {
 		return this.pages[pgno].getData();
 	}
 	/**
+	 * 读取指定页面中的数据
+	 * @param pgno 要读取的页号
+	 * @param rowid 要读取的rowid
+	 * @return 指定页面的数据
+	 */
+	public String readDataByRowid(int pgno, int rowid){
+		if(pgno <= 0 )
+			return null;
+		String result = null;
+		Page page = this.pages[pgno];
+		byte[] data = page.getData();
+		if(page.getPageType() == PageType.TABLE_LEAF){
+			int offset = page.getOffset();
+			int szHdr = Utils.loadIntFromBytes(data, offset+4);
+			int skip = szHdr;
+			int[] types = new int[szHdr - SpaceAllocation.RECORD_HEADER];
+			for(int col = 0 ; col< szHdr - SpaceAllocation.RECORD_HEADER; col++){
+				switch (data[offset + SpaceAllocation.RECORD_HEADER + col]){
+					case DataType.INTEGER:
+						skip += 4;
+						types[col] = DataType.INTEGER;
+						break;
+					case DataType.LONG:
+						skip += 8;
+						types[col] = DataType.LONG;
+						break;
+					case DataType.TINY_INT:
+						skip += 1;
+						types[col] = DataType.TINY_INT;
+						break;
+					case DataType.SMALL_INT:
+						skip += 2;
+						types[col] = DataType.SMALL_INT;
+						break;
+					case DataType.TEXT:
+						skip += 50;
+						types[col] = DataType.TEXT;
+						break;
+				}
+			}
+
+			for(; offset < SpaceAllocation.PAGE_SIZE; offset += skip){
+				if(Utils.loadIntFromBytes(data, offset) == rowid){
+					List<String> cols = null;
+					cols = loadColsFromBytes(data, types, offset);
+					result = colsToRow(cols);
+					break;
+				}
+			}
+			return result;
+		}else{
+			return result;
+		}
+	}
+	/**
 	 * 读取指定页面中的数据返回记录
 	 * @param pgno 要写入数据的页号
 	 * @return 指定页面的记录
@@ -97,8 +150,10 @@ public class Pager {
 		List<String> result = new ArrayList<String>();
 		Page page = this.pages[pgno];
 		int offset = page.getOffset();
+		if(offset == page.getSize() || offset <= SpaceAllocation.PAGE_HEADER_SIZE)
+			return null;
 		byte[] data = page.getData();
-		int hdrSz = Utils.loadIntFromBytes(data, offset);
+		int hdrSz = Utils.loadIntFromBytes(data, offset + 4);
 		int[] types = new int[hdrSz - SpaceAllocation.RECORD_HEADER];
 		int dataSize = 0;
 		for(int i =0; i < hdrSz - SpaceAllocation.RECORD_HEADER; i++){
@@ -129,7 +184,6 @@ public class Pager {
 		for(int index = (offset+hdrSz); index < SpaceAllocation.PAGE_SIZE; ){
 			List<String> cols = null;
 			cols = loadColsFromBytes(data, types, index);
-			String rec = cols.toString();
 			result.add(colsToRow(cols));
 			index += hdrSz + dataSize;
 		}
@@ -242,7 +296,9 @@ public class Pager {
 			raf.seek(0);
 			for(int i =0; i<this.pageNum;i++)
 			{
-				raf.write(this.pages[i].getData());
+				Page page = this.pages[i];
+//				page.updateData();
+				raf.write(page.getData());
 			}
 
 		}catch (IOException e){
@@ -259,7 +315,7 @@ public class Pager {
 	public Page loadPage(int pgno){
 		if(pgno <= 0)
 			return null;
-		if(Utils.loadShortFromBytes(this.getPages()[pgno].getData(), 0) < SpaceAllocation.PAGE_HEADER_SIZE )
+		if(Utils.loadIntFromBytes(this.getPages()[pgno].getData(), Position.PGNO_IN_PAGE) != 0 )
 			return this.pages[pgno];
 
 		RandomAccessFile raf = null;
@@ -275,12 +331,9 @@ public class Pager {
 			newPage.setSize(SpaceAllocation.PAGE_SIZE);
 			newPage.setSectorSize(SpaceAllocation.SECTOR_SIZE);
 			newPage.setData(data);
-			newPage.setOffset(Utils.loadShortFromBytes(data,0));
-			newPage.setOverflow(data[4]==1?true:false);
-			newPage.setHasOverflow(data[5]==1?true:false);
-			newPage.setOverflowPgno(Utils.loadIntFromBytes(data, 6));
-			newPage.setOverflowPage(loadPage(Utils.loadIntFromBytes(data, 6)));
-			newPage.setPgno(pgno);
+			newPage.setOffset(Utils.loadShortFromBytes(data, Position.OFFSET_IN_PAGE));
+			newPage.setOverflowPgno(Utils.loadIntFromBytes(data, Position.OVERFLOWPGNO_IN_PAGE));
+			newPage.setPgno(Utils.loadIntFromBytes(data, Position.PGNO_IN_PAGE));
 
 			this.pages[pgno] = newPage;
 			return newPage;
@@ -410,20 +463,37 @@ public class Pager {
 			byte[] data = new byte[SpaceAllocation.PAGE_SIZE];
 			int len = 0;
 			int pgno = 0;
+
 			/**
 			 *	开始读取数据库：
 			 * 第一次读取的根页面，后续为数据页面
 			 */
-			while((len = fis.read(data,0,data.length)) !=0 ){
-				pgno ++ ;
-				if(pgno < this.pageNum)
-					this.pages[pgno].fillData(data);
+			while((len = fis.read(data,0,data.length)) > 0 ){
+
+				Page page = null;
+				if(pgno < this.pageNum) {
+					page = this.pages[pgno];
+					page.copyData(data);
+				}
 				else{
 					resizePages();
-					this.pages[pgno].fillData(data);
+					page = this.pages[pgno];
+					page.copyData(data);
 				}
+				page.setPgno(Utils.loadIntFromBytes(page.getData(), Position.PGNO_IN_PAGE));
+				page.setPageType(page.getData()[Position.PGTYPE_IN_PAGE]);
+				if(pgno == 1)
+				System.out.println(pgno+",offset:"+Utils.loadIntFromBytes(page.getData(), Position.OFFSET_IN_PAGE));
+				page.setOffset(Utils.loadIntFromBytes(page.getData(), Position.OFFSET_IN_PAGE));
+				page.setOverflowPgno(Utils.loadIntFromBytes(page.getData(), Position.OVERFLOWPGNO_IN_PAGE));
+				page.setpChild(Utils.loadIntFromBytes(page.getData(), Position.CHILDPAGE_IN_PAGE));
+				byte nCell = page.getData()[Position.CELLNUM_IN_PAGE];
+				List<Integer> cells = new ArrayList<>();
+				for(int i = 0 ; i<nCell; i++){
+					page.addCell(Utils.loadIntFromBytes(page.getData(), Position.CELL_IN_PAGE + (i*4) ));
+				}
+				pgno++;
 			}
-
 		}catch (IOException e){
 			e.printStackTrace();
 		}finally {
@@ -445,12 +515,9 @@ public class Pager {
 			Page page = new Page();
 			page.setData(new byte[SpaceAllocation.PAGE_SIZE]);
 			page.setPgno(i);
-			page.setOverflowPage(null);
 			page.setSectorSize(SpaceAllocation.SECTOR_SIZE);
 			page.setSize(SpaceAllocation.PAGE_SIZE);
 			page.setOffset(SpaceAllocation.PAGE_SIZE);
-			page.setHasOverflow(false);
-			page.setOverflow(false);
 			newPages[i] = page;
 		}
 

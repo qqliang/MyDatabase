@@ -4,8 +4,6 @@ import com.database.global.ColumnConstraint;
 import com.database.global.DataType;
 import com.database.global.SpaceAllocation;
 import com.database.global.Utils;
-import com.sun.org.apache.xerces.internal.impl.dv.DatatypeException;
-import com.sun.org.apache.xerces.internal.impl.xs.util.ShortListImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -119,21 +117,22 @@ public class Record {
         return this.columns.size();
     }
 
-    public byte[] getBytes(String record){
+    public byte[] getBytes(int rowid, String record){
         if(record == null || record.isEmpty())
             return null;
-        return getBytes(Arrays.asList(record.split(",")));
+        return getBytes(rowid, Arrays.asList(record.split(",")));
     }
-    public byte[] getBytes(List<String> record)
+    private byte[] getBytes(int rowid, List<String> record)
     {
         if(columns == null || columns.size() == 0)
             return null;
 
         int colNum = getColNum();
-        byte[] data = new byte[this.size];
+        byte[] data = new byte[calculateSize()];
         int headerSize = SpaceAllocation.RECORD_HEADER + colNum;
 
-        Utils.fillInt(headerSize, data, 0);
+        Utils.fillInt(rowid, data, Position.ROWID_IN_RECORD);
+        Utils.fillInt(headerSize, data, Position.HEADER_IN_RECORD );
         for(int i = 0 ; i < colNum; i++){
             data[SpaceAllocation.RECORD_HEADER+i] = this.columns.get(i).getType();
         }
