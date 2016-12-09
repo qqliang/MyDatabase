@@ -379,8 +379,9 @@ public class Pager {
 		}
 	}
 	public Page newPage(){
-
-		return freeList.get(1);
+		Page newPage = freeList.remove(1);
+		freeList.remove(1);
+		return newPage;
 	}
 	public void freePage(int pgno){
 	}
