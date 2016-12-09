@@ -19,7 +19,7 @@ public class TestPager {
     public static void main(String[] args){
 //        testRead();
 //        testReadByRowid();
-        testFlush();
+//        testFlush();
         testLoad();
     }
     public static void testFlush(){
@@ -46,8 +46,8 @@ public class TestPager {
         Pager pager = new Pager(database);
         pager.loadDB();
 
-        Map map = pager.readRecord(1);
-        System.out.println(map);
+        List<Map.Entry<Integer, String>> list = pager.readRecord(1);
+        System.out.println(list);
     }
     public static void testRead(){
         Database database = new Database();
@@ -59,8 +59,8 @@ public class TestPager {
         pager.writeData(1,record.getBytes(rowid++,"2,lqq,22"));
         pager.writeData(1,record.getBytes(rowid++,"3,hh,26"));
 
-        Map map = pager.readRecord(1);
-        System.out.println(map.toString());
+        List<Map.Entry<Integer, String>> list = pager.readRecord(1);
+        System.out.println(list.toString());
     }
     public static void testReadByRowid(){
         Database database = new Database();
@@ -73,7 +73,7 @@ public class TestPager {
         pager.writeData(1,record.getBytes(rowid++,"2,lqq,22"));
         pager.writeData(1,record.getBytes(rowid++,"3,hh,26"));
 
-        String row = pager.readDataByRowid(1,2);
+        String row = pager.readDataByRowid(1,2).getValue();
         System.out.println("row:"+row);
     }
     public static TableSchema getRecord() {

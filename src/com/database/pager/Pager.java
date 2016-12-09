@@ -91,10 +91,10 @@ public class Pager {
 	 * @param rowid 要读取的rowid
 	 * @return 指定页面的数据
 	 */
-	public String readDataByRowid(int pgno, int rowid){
+	public Map.Entry<Integer,String>  readDataByRowid(int pgno, int rowid){
 		if(pgno <= 0 )
 			return null;
-		String result = null;
+		Map.Entry<Integer,String> entry = null;			//返回的结果
 		Page page = this.pages[pgno];
 		byte[] data = page.getData();
 		if(page.getPageType() == PageType.TABLE_LEAF){
@@ -130,14 +130,13 @@ public class Pager {
 			for(; offset < page.getSize(); offset += skip){
 				if(Utils.loadIntFromBytes(data, offset) == rowid){
 					List<String> cols = null;
-					Map<Integer,String> entry = loadEntryFromBytes(data, szHdr, types, offset);
-					result = entry.get(rowid);
+					entry = loadEntryFromBytes(data, szHdr, types, offset);
 					break;
 				}
 			}
-			return result;
+			return entry;
 		}else{
-			return result;
+			return entry;
 		}
 	}
 	/**
@@ -145,7 +144,7 @@ public class Pager {
 	 * @param pgno 要写入数据的页号
 	 * @return 指定页面的记录的Map表示 rowid，记录值
 	 */
-	public Map<Integer, String> readRecord(int pgno){
+	public List<Map.Entry<Integer, String>> readRecord(int pgno){
 		if(pgno <= 0 )
 			return null;
 		List<String> result = new ArrayList<String>();
@@ -182,15 +181,15 @@ public class Pager {
 					break;
 			}
 		}
-		Map<Integer, String> entries = new HashMap<Integer, String>();
+		List<Map.Entry<Integer, String>> list = new ArrayList<Map.Entry<Integer, String>>();
 
 		for(int index = offset; index < page.getSize(); ){
-			Map<Integer, String> entry = loadEntryFromBytes(data, hdrSz, types, index);
-			entries.putAll(entry);
+			Map.Entry<Integer, String> entry = loadEntryFromBytes(data, hdrSz, types, index);
+			list.add(entry);
 			index += hdrSz + dataSize;
 		}
 
-		return entries;
+		return list;
 	}
 
 	public String colsToRow(List<String> cols){
@@ -206,9 +205,9 @@ public class Pager {
 	 * @param types
 	 * @param hdrSz
 	 * @param start		加载起始位置
-	 * @return
+	 * @return 一条记录对应的Entry
 	 */
-	public Map<Integer, String> loadEntryFromBytes(byte[] data, int hdrSz, int[] types, int start){
+	public Map.Entry<Integer, String> loadEntryFromBytes(byte[] data, int hdrSz, int[] types, int start){
 		Map<Integer, String> entry = new HashMap<Integer, String>();
 		List<String> cols = new ArrayList<String>();
 		int colNum = types.length;
@@ -240,7 +239,7 @@ public class Pager {
 		}
 
 		entry.put(rowid, colsToRow(cols));
-		return entry;
+		return entry.entrySet().iterator().next();
 	}
 
 	/**
