@@ -181,13 +181,30 @@ public class Page {
         Utils.fillInt(this.offset,this.data,Position.OFFSET_IN_PAGE);
 
     }
+
+    /**
+     * 将参数内容拷贝到当前page对象的data中，当参数长度>页面大小，不做任何改变
+     * @param data
+     */
     public void copyData(byte[] data)
     {
-        if(data.length != this.data.length)
+        if(data.length > this.size)
             return ;
-        for(int i =0 ;i<data.length;i++){
-            this.data[i] = data[i];
+
+        if(data.length == this.size)
+        {
+            for(int i =0 ; i < this.data.length;i++){
+                this.data[i] = data[i];
+            }
+        }else{
+            for(int i =0 ; i < data.length;i++){
+                this.data[i] = data[i];
+            }
+            for(int i = data.length ; i < this.data.length;i++){
+                this.data[i] = (byte) 0;
+            }
         }
+
     }
     /**
      *  设置指定位置数据
