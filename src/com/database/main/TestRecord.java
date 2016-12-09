@@ -3,7 +3,7 @@ package com.database.main;
 import com.database.global.ColumnConstraint;
 import com.database.global.DataType;
 import com.database.pager.Column;
-import com.database.pager.Record;
+import com.database.pager.TableSchema;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,12 +16,12 @@ public class TestRecord {
         testCalculateSize();
     }
     public static void testCalculateSize(){
-        Record record = getRecord();
+        TableSchema record = getRecord();
         int size = record.calculateSize();
         System.out.println(size);
     }
-    public static Record getRecord(){
-        Record record = new Record();
+    public static TableSchema getRecord(){
+        TableSchema record = new TableSchema();
         List<Column> cols = new ArrayList<Column>();
         Column idCol =  new Column();
         idCol.setName("id");

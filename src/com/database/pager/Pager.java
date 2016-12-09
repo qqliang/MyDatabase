@@ -1,10 +1,8 @@
 package com.database.pager;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import com.database.global.*;
-import javafx.geometry.Pos;
 
 
 public class Pager {
@@ -129,11 +127,11 @@ public class Pager {
 				}
 			}
 
-			for(; offset < SpaceAllocation.PAGE_SIZE; offset += skip){
+			for(; offset < page.getSize(); offset += skip){
 				if(Utils.loadIntFromBytes(data, offset) == rowid){
 					List<String> cols = null;
-					cols = loadColsFromBytes(data, types, offset);
-					result = colsToRow(cols);
+					Map<Integer,String> entry = loadEntryFromBytes(data, szHdr, types, offset);
+					result = entry.get(rowid);
 					break;
 				}
 			}
@@ -145,9 +143,9 @@ public class Pager {
 	/**
 	 * 读取指定页面中的数据返回记录
 	 * @param pgno 要写入数据的页号
-	 * @return 指定页面的记录
+	 * @return 指定页面的记录的Map表示 rowid，记录值
 	 */
-	public List<String> readRecord(int pgno){
+	public Map<Integer, String> readRecord(int pgno){
 		if(pgno <= 0 )
 			return null;
 		List<String> result = new ArrayList<String>();
@@ -184,14 +182,17 @@ public class Pager {
 					break;
 			}
 		}
-		for(int index = (offset+hdrSz); index < SpaceAllocation.PAGE_SIZE; ){
-			List<String> cols = null;
-			cols = loadColsFromBytes(data, types, index);
-			result.add(colsToRow(cols));
+		Map<Integer, String> entries = new HashMap<Integer, String>();
+
+		for(int index = offset; index < page.getSize(); ){
+			Map<Integer, String> entry = loadEntryFromBytes(data, hdrSz, types, index);
+			entries.putAll(entry);
 			index += hdrSz + dataSize;
 		}
-		return result;
+
+		return entries;
 	}
+
 	public String colsToRow(List<String> cols){
 		StringBuilder row = new StringBuilder();
 		for(String col : cols){
@@ -203,19 +204,24 @@ public class Pager {
 	 *
 	 * @param data		数据加载的地方
 	 * @param types
+	 * @param hdrSz
 	 * @param start		加载起始位置
 	 * @return
 	 */
-	public List<String> loadColsFromBytes(byte[] data, int[] types, int start){
+	public Map<Integer, String> loadEntryFromBytes(byte[] data, int hdrSz, int[] types, int start){
+		Map<Integer, String> entry = new HashMap<Integer, String>();
 		List<String> cols = new ArrayList<String>();
-		for(int i=0 ; i < types.length; i++){
-			switch (types[i]){
+		int colNum = types.length;
+		int rowid = Utils.loadIntFromBytes(data, start);
+		start += hdrSz;
+		for (int i = 0; i < colNum; i++) {
+			switch (types[i]) {
 				case DataType.INTEGER:
-					cols.add(new Integer(Utils.loadIntFromBytes(data,start)).toString());
+					cols.add(new Integer(Utils.loadIntFromBytes(data, start)).toString());
 					start += 4;
 					break;
 				case DataType.SMALL_INT:
-					cols.add(new Short(Utils.loadShortFromBytes(data,start)).toString());
+					cols.add(new Short(Utils.loadShortFromBytes(data, start)).toString());
 					start += 2;
 					break;
 				case DataType.TINY_INT:
@@ -223,17 +229,18 @@ public class Pager {
 					start += 1;
 					break;
 				case DataType.TEXT:
-					cols.add(Utils.loadStrFromBytes(data,start,50));
+					cols.add(Utils.loadStrFromBytes(data, start, 50));
 					start += 50;
 					break;
 				case DataType.LONG:
-					cols.add(new Long(Utils.loadLongFromBytes(data,start)).toString());
+					cols.add(new Long(Utils.loadLongFromBytes(data, start)).toString());
 					start += 8;
 					break;
 			}
 		}
 
-		return cols;
+		entry.put(rowid, colsToRow(cols));
+		return entry;
 	}
 
 	/**

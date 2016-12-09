@@ -4,6 +4,8 @@ package com.database.pager;
  * Created by zoe on 2016/12/8.
  */
 public class Position {
+    public static int MAXROWID_IN_ROOT = 120;
+
     public static int PGNO_IN_PAGE = 0 ;
     public static byte PGTYPE_IN_PAGE = 4;
     public static int OFFSET_IN_PAGE = 5;

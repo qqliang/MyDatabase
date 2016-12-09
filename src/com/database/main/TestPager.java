@@ -6,10 +6,11 @@ import com.database.global.Database;
 import com.database.global.PageType;
 import com.database.pager.Column;
 import com.database.pager.Pager;
-import com.database.pager.Record;
+import com.database.pager.TableSchema;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by zoe on 2016/12/5.
@@ -25,7 +26,7 @@ public class TestPager {
         Database database = new Database();
         database.openDB("test2");
         Pager pager = new Pager(database);
-        Record record = getRecord();
+        TableSchema record = getRecord();
         int rowid = 0;
         pager.writeData(1, record.getBytes(++rowid, "1,zhouyu,22"));
         pager.writeData(1, record.getBytes(++rowid,"2,lqq,22"));
@@ -45,27 +46,27 @@ public class TestPager {
         Pager pager = new Pager(database);
         pager.loadDB();
 
-        List<String> list = pager.readRecord(1);
-        System.out.println(list);
+        Map map = pager.readRecord(1);
+        System.out.println(map);
     }
     public static void testRead(){
         Database database = new Database();
         database.openDB("test");
         Pager pager = new Pager(database);
-        Record record = getRecord();
+        TableSchema record = getRecord();
         int rowid = 0;
         pager.writeData(1,record.getBytes(rowid++,"1,zhouyu,22"));
         pager.writeData(1,record.getBytes(rowid++,"2,lqq,22"));
         pager.writeData(1,record.getBytes(rowid++,"3,hh,26"));
 
-        List<String> list = pager.readRecord(1);
-        System.out.println(list.toString());
+        Map map = pager.readRecord(1);
+        System.out.println(map.toString());
     }
     public static void testReadByRowid(){
         Database database = new Database();
         database.openDB("test");
         Pager pager = new Pager(database);
-        Record record = getRecord();
+        TableSchema record = getRecord();
         pager.getPages()[1].setPageType(PageType.TABLE_LEAF);
         int rowid = 0;
         pager.writeData(1,record.getBytes(rowid++,"1,zhouyu,22"));
@@ -73,12 +74,10 @@ public class TestPager {
         pager.writeData(1,record.getBytes(rowid++,"3,hh,26"));
 
         String row = pager.readDataByRowid(1,2);
-        System.out.println(row);
-        List<String> list = pager.readRecord(1);
-        System.out.println(list.toString());
+        System.out.println("row:"+row);
     }
-    public static Record getRecord() {
-        Record record = new Record();
+    public static TableSchema getRecord() {
+        TableSchema record = new TableSchema();
         List<Column> cols = new ArrayList<Column>();
         Column idCol =  new Column();
         idCol.setName("id");
