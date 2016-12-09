@@ -13,16 +13,16 @@ import java.util.List;
 /**
  * Created by zoe on 2016/12/5.
  */
-public class Record {
+public class TableSchema {
     private List<Column> columns;
     private int size ;
 
-    public Record(List<Column> columns) {
+    public TableSchema(List<Column> columns) {
         this.columns = columns;
         this.size = calculateSize();
     }
 
-    public Record() {
+    public TableSchema() {
     }
 
     public List<Column> getColumns() {
