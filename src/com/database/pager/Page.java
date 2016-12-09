@@ -24,10 +24,9 @@ public class Page {
     private int pgno;                                   //页号
     private byte pageType;                              //页面类型，值由PageType类定义
     private int offset;                                 //指向有数据的地方
-    private int pChild;                                 //Cell中的孩子指针（页号）
-    private int pParent;                                //父节点
-    private int pPrev;                                  //前一个节点
-    private int pNext;                                  //后一个节点
+    private int pParent;                                //父节点 pgno
+    private int pPrev;                                  //前一个节点 pgno
+    private int pNext;                                  //后一个节点 pgno
     private int overflowPgno;                           //溢出页号
     private byte nCell;                                  //当前页面中cell的数量
     private List<Integer> cells;                         //Cell中：rowid
@@ -50,7 +49,18 @@ public class Page {
     }
 
     public void setpParent(int pParent) {
-        this.pParent = pParent;
+        if(pParent < 2)
+            return ;
+
+        if(this.pParent == 1){
+            /**
+             * 有待补充
+             */
+        }
+        if(this.pParent > 1){
+            this.pPrev = pPrev;
+            Utils.fillInt(this.pParent,this.data,Position.PARENT_PAGE_IN_PAGE);
+        }
     }
 
     public int getpPrev() {
@@ -58,7 +68,18 @@ public class Page {
     }
 
     public void setpPrev(int pPrev) {
-        this.pPrev = pPrev;
+        if(pPrev < 2)
+            return ;
+
+        if(this.pgno == 1){
+            /**
+             * 有待补充
+             */
+        }
+        if(this.pgno > 1){
+            this.pPrev = pPrev;
+            Utils.fillInt(this.pPrev,this.data,Position.PREV_PAGE_IN_PAGE);
+        }
     }
 
     public int getpNext() {
@@ -66,7 +87,18 @@ public class Page {
     }
 
     public void setpNext(int pNext) {
-        this.pNext = pNext;
+        if(pNext < 2)
+            return ;
+
+        if(this.pgno == 1){
+            /**
+             * 有待补充
+             */
+        }
+        if(this.pgno > 1){
+            this.pNext = pNext;
+            Utils.fillInt(this.pNext,this.data,Position.NEXT_PAGE_IN_PAGE);
+        }
     }
 
     //其他
@@ -97,7 +129,9 @@ public class Page {
         this.data[Position.PGTYPE_IN_PAGE] = this.pageType;
         Utils.fillInt(this.offset,this.data,Position.OFFSET_IN_PAGE);
         Utils.fillInt(this.overflowPgno,this.data,Position.OVERFLOWPGNO_IN_PAGE);
-        Utils.fillInt(this.pChild,this.data,Position.CHILDPAGE_IN_PAGE);
+        Utils.fillInt(this.pParent,this.data,Position.PARENT_PAGE_IN_PAGE);
+        Utils.fillInt(this.pPrev,this.data,Position.PREV_PAGE_IN_PAGE);
+        Utils.fillInt(this.pNext,this.data,Position.NEXT_PAGE_IN_PAGE);
         this.data[Position.CELLNUM_IN_PAGE] = this.nCell;
         setCells(this.cells);
 
@@ -107,15 +141,19 @@ public class Page {
     @Override
     public String toString() {
         return "Page{" +
-                " maxRowID=" + maxRowID +
+                "order=" + order +
+                ", maxRowID=" + maxRowID +
                 ", pgno=" + pgno +
                 ", pageType=" + pageType +
                 ", offset=" + offset +
-                ", pChild=" + pChild +
+                ", pParent=" + pParent +
+                ", pPrev=" + pPrev +
+                ", pNext=" + pNext +
                 ", overflowPgno=" + overflowPgno +
                 ", nCell=" + nCell +
                 ", cells=" + cells +
                 ", size=" + size +
+                ", data=" + Arrays.toString(data) +
                 ", sectorSize=" + sectorSize +
                 ", reserved=" + reserved +
                 ", headerSize=" + headerSize +
@@ -132,23 +170,9 @@ public class Page {
         this.pageType =  this.data[Position.PGTYPE_IN_PAGE];
     }
 
-    public int getpChild() {
-        return this.pChild;
-    }
 
     public void setpChild(int pChild) {
-        if(pChild < 2)
-            return ;
 
-        if(this.pgno == 1){
-            /**
-             * 有待补充
-             */
-        }
-        if(this.pgno > 1){
-            this.pChild = pChild;
-            Utils.fillInt(this.pChild,this.data,Position.CHILDPAGE_IN_PAGE);
-        }
     }
 
     public byte getOrder() {

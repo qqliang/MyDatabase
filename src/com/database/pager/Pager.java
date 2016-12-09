@@ -333,7 +333,9 @@ public class Pager {
 				page.setPageType(page.getData()[Position.PGTYPE_IN_PAGE]);
 				page.setOffset(Utils.loadIntFromBytes(page.getData(), Position.OFFSET_IN_PAGE));
 				page.setOverflowPgno(Utils.loadIntFromBytes(page.getData(), Position.OVERFLOWPGNO_IN_PAGE));
-				page.setpChild(Utils.loadIntFromBytes(page.getData(), Position.CHILDPAGE_IN_PAGE));
+				page.setpParent(Utils.loadIntFromBytes(page.getData(), Position.PARENT_PAGE_IN_PAGE));
+				page.setpPrev(Utils.loadIntFromBytes(page.getData(), Position.PREV_PAGE_IN_PAGE));
+				page.setpNext(Utils.loadIntFromBytes(page.getData(), Position.NEXT_PAGE_IN_PAGE));
 				byte nCell = page.getData()[Position.CELLNUM_IN_PAGE];
 				List<Integer> cells = new ArrayList<>();
 				for(int i = 0 ; i<nCell; i++){
