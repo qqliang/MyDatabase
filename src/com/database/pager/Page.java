@@ -29,13 +29,13 @@ public class Page {
     private int pPrev;                                  //前一个节点 pgno
     private int pNext;                                  //后一个节点 pgno
     private int overflowPgno;                           //溢出页号
-    private byte nCell;                                  //当前页面中cell的数量
-    private List<Integer> cells;                         //Cell中：rowid
+    private byte nCell;                                 //当前页面中cell的数量
+    private List<Integer> cells;                        //Cell中：rowid
 
     //其他
     private int size;
     private byte[] data;
-    private List<PgHdr> dirtyPages;
+    private boolean dirty;
     private short nRef;
 
     //数据域。内部结点：存储页号；叶子结点：存储记录
