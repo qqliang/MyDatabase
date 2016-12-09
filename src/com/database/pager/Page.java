@@ -25,6 +25,9 @@ public class Page {
     private byte pageType;                              //页面类型，值由PageType类定义
     private int offset;                                 //指向有数据的地方
     private int pChild;                                 //Cell中的孩子指针（页号）
+    private int pParent;                                //父节点
+    private int pPrev;                                  //前一个节点
+    private int pNext;                                  //后一个节点
     private int overflowPgno;                           //溢出页号
     private byte nCell;                                  //当前页面中cell的数量
     private List<Integer> cells;                         //Cell中：rowid
@@ -32,6 +35,38 @@ public class Page {
     public void setnCell(byte nCell) {
         this.nCell = nCell;
         this.data[Position.CELLNUM_IN_PAGE] = this.nCell;
+    }
+
+    public int getMaxRowID() {
+        return maxRowID;
+    }
+
+    public void setMaxRowID(int maxRowID) {
+        this.maxRowID = maxRowID;
+    }
+
+    public int getpParent() {
+        return pParent;
+    }
+
+    public void setpParent(int pParent) {
+        this.pParent = pParent;
+    }
+
+    public int getpPrev() {
+        return pPrev;
+    }
+
+    public void setpPrev(int pPrev) {
+        this.pPrev = pPrev;
+    }
+
+    public int getpNext() {
+        return pNext;
+    }
+
+    public void setpNext(int pNext) {
+        this.pNext = pNext;
     }
 
     //其他
