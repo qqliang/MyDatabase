@@ -95,9 +95,6 @@ public class Page {
     }
 
     public void setpPrev(int pPrev) {
-        if(pPrev < 2)
-            return ;
-
         if(this.pgno == 1){
             /**
              * 有待补充
@@ -114,9 +111,6 @@ public class Page {
     }
 
     public void setpNext(int pNext) {
-        if(pNext < 2)
-            return ;
-
         if(this.pgno == 1){
             /**
              * 有待补充
