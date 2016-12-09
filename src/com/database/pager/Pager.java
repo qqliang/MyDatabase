@@ -234,59 +234,6 @@ public class Pager {
 	}
 
 	/**
-	 * 为表添加数据
-	 * @param path 写入的目录路径
-	 * @param tableName	表名
-	 * @param row	写入的每一行的行数据
-	 * @return
-	 */
-	public boolean writeTable(String path, String tableName, String row){
-		String dir = "";
-		String fileName = tableName;
-		boolean result = true;
-		File file = null;
-		
-		
-		if(path != null && path.length() > 0 ){
-			dir = path;
-			file = new File(dir, fileName+".txt");
-		}else{
-			file = new File(fileName);
-		}
-		BufferedWriter bw = null;
-		FileWriter fw = null;
-		
-		try {
-			fw = new FileWriter(file,true);
-			bw = new BufferedWriter(fw);
-			bw.write(row);
-			bw.newLine();
-			bw.flush();
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}finally {
-			
-			if(bw != null)
-				try {
-					bw.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			if(fw != null)
-				try {
-					fw.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-		}
-		return result;
-	}
-
-	/**
 	 * 刷新页面，写磁盘
 	 */
 	public void flush(){
@@ -348,6 +295,7 @@ public class Pager {
 		}
 		return newPage;
 	}
+
 
 	/**
 	 *	加载数据库文件中的数据。
