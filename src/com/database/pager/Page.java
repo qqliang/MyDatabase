@@ -58,7 +58,7 @@ public class Page {
              */
         }
         if(this.pParent > 1){
-            this.pPrev = pPrev;
+            this.pParent = pParent;
             Utils.fillInt(this.pParent,this.data,Position.PARENT_PAGE_IN_PAGE);
         }
     }
