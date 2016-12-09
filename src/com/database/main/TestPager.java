@@ -9,6 +9,7 @@ import com.database.pager.Pager;
 import com.database.pager.TableSchema;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,10 +33,10 @@ public class TestPager {
 
     public static void main(String[] args){
         init();
-//        testRead();
+        testRead();
 //        testReadByRowid();
 //        testFlush();
-        testLoad();
+//        testLoad();
     }
 
     /**
@@ -44,13 +45,40 @@ public class TestPager {
     public static void testFlush(){
 
         int rowid = 0;
-        pager.writeData(1, schema.getBytes(++rowid, "1,zhouyu,22"));
-        pager.writeData(1, schema.getBytes(++rowid,"2,lqq,22"));
-        pager.writeData(1, schema.getBytes(++rowid,"3,hh,26"));
+        List<Map.Entry<Integer,byte[]>> entryList = new ArrayList<Map.Entry<Integer, byte[]>>();
+        Map<Integer,byte[]> map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "1,zhouyu,22"));
+        entryList.add(map.entrySet().iterator().next());
 
-        pager.writeData(1, schema.getBytes(++rowid,"4,dxr,27"));
-        pager.writeData(1, schema.getBytes(++rowid,"5,yyc,27"));
-        pager.writeData(1, schema.getBytes(++rowid,"6,whw,22"));
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "2,lqq,22"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "3,hh,26"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "4,dxr,27"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "5,yyc,27"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "6,whw,22"));
+        entryList.add(map.entrySet().iterator().next());
+
+        pager.writeData(1,entryList);
+        pager.writeData(1, entryList);
+//        pager.writeData(1, schema.getBytes(++rowid, "1,zhouyu,22"));
+//        pager.writeData(1, schema.getBytes(++rowid,"2,lqq,22"));
+//        pager.writeData(1, schema.getBytes(++rowid,"3,hh,26"));
+//
+//        pager.writeData(1, schema.getBytes(++rowid,"4,dxr,27"));
+//        pager.writeData(1, schema.getBytes(++rowid,"5,yyc,27"));
+//        pager.writeData(1, schema.getBytes(++rowid,"6,whw,22"));
         pager.flush();
 
     }
@@ -75,9 +103,33 @@ public class TestPager {
     public static void testRead(){
 
         int rowid = 0;
-        pager.writeData(1,schema.getBytes(rowid++,"1,zhouyu,22"));
-        pager.writeData(1,schema.getBytes(rowid++,"2,lqq,22"));
-        pager.writeData(1,schema.getBytes(rowid++,"3,hh,26"));
+
+        List<Map.Entry<Integer,byte[]>> entryList = new ArrayList<Map.Entry<Integer, byte[]>>();
+        Map<Integer,byte[]> map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "1,zhouyu,22"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "2,lqq,22"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "3,hh,26"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "4,dxr,27"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "5,yyc,27"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "6,whw,22"));
+        entryList.add(map.entrySet().iterator().next());
+
+        pager.writeData(1,entryList);
 
         List<Map.Entry<Integer, String>> list = pager.readRecord(1);
         System.out.println(list.toString());
@@ -90,10 +142,32 @@ public class TestPager {
 
         pager.getPages()[1].setPageType(PageType.TABLE_LEAF);
         int rowid = 0;
-        pager.writeData(1,schema.getBytes(rowid++,"1,zhouyu,22"));
-        pager.writeData(1,schema.getBytes(rowid++,"2,lqq,22"));
-        pager.writeData(1,schema.getBytes(rowid++,"3,hh,26"));
+        List<Map.Entry<Integer,byte[]>> entryList = new ArrayList<Map.Entry<Integer, byte[]>>();
+        Map<Integer,byte[]> map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "1,zhouyu,22"));
+        entryList.add(map.entrySet().iterator().next());
 
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "2,lqq,22"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "3,hh,26"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "4,dxr,27"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "5,yyc,27"));
+        entryList.add(map.entrySet().iterator().next());
+
+        map = new HashMap<>();
+        map.put(++rowid,schema.getBytes(rowid, "6,whw,22"));
+        entryList.add(map.entrySet().iterator().next());
+
+        pager.writeData(1,entryList);
         String row = pager.readDataByRowid(1,2).getValue();
         System.out.println("row:"+row);
     }
