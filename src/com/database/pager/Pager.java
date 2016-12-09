@@ -348,107 +348,6 @@ public class Pager {
 		}
 		return newPage;
 	}
-	public boolean writeTable(String path, String tableName, List<String> rows){
-		String dir = "";
-		String fileName = tableName;
-		boolean result = true;
-		File file = null;
-		
-		
-		if(path != null && path.length() > 0 ){
-			dir = path;
-			file = new File(dir, fileName);
-		}else{
-			file = new File(fileName);
-		}
-		BufferedWriter bw = null;
-		FileWriter fw = null;
-		
-		try {
-			
-			fw = new FileWriter(file,true);
-			bw = new BufferedWriter(fw);
-			
-			for(String row : rows){
-				bw.write(row);
-				bw.newLine();
-			}
-			bw.flush();
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}finally {
-			
-			if(bw != null)
-				try {
-					bw.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			if(fw != null)
-				try {
-					fw.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-		}
-		return result;
-	}
-	/**
-	 * 读取所有表数据 
-	 * @param path 写入的目录路径
-	 * @param tableName	表名
-	 * @return 表的所有行
-	 */
-	public List<String> readTable(String path, String tableName){
-		String dir = "";
-		String fileName = tableName;
-		boolean result = true;
-		File file = null;
-		List<String> rows = new ArrayList<String>();
-		
-		if(path != null && path.length() > 0 ){
-			dir = path;
-			file = new File(dir, fileName);
-		}else{
-			file = new File(fileName);
-		}
-		BufferedReader bw = null;
-		FileReader fw = null;
-		
-		try {
-			fw = new FileReader(file);
-			bw = new BufferedReader(fw);
-			String row = null;
-			while((row = bw.readLine())!=null){
-				rows.add(row);
-			}
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}finally {
-			
-			if(bw != null)
-				try {
-					bw.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			if(fw != null)
-				try {
-					fw.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-		}
-		return rows;
-	}
 
 	/**
 	 *	加载数据库文件中的数据。
@@ -469,7 +368,6 @@ public class Pager {
 			 * 第一次读取的根页面，后续为数据页面
 			 */
 			while((len = fis.read(data,0,data.length)) > 0 ){
-
 				Page page = null;
 				if(pgno < this.pageNum) {
 					page = this.pages[pgno];
@@ -504,7 +402,7 @@ public class Pager {
 	}
 	public Page newPage(){
 		Page page = new Page();
-		return null;
+		return page;
 	}
 	public void freePage(int pgno){
 	}
