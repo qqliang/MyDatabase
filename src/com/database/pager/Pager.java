@@ -66,13 +66,23 @@ public class Pager {
 	}
 
 	/**
-	 * 像指定页面中写入数据
+	 * 像指定页面中写入数据，即刷新整个页面数据
+	 * @param pgno 要写入数据的页号
+	 * @param data	要写入的数据，entry中的byte[]可以通过Record的getBytes方法可以简单得到
+	 */
+	public void writeData(int pgno, List<Map.Entry<Integer, byte[]>> data){
+		Page page = this.pages[pgno];
+		page.fillData(data);
+	}
+
+	/**
+	 * 像指定页面中追加数据(会有错误！)
 	 * @param pgno 要写入数据的页号
 	 * @param data	要写入的数据，可以通过Record的getBytes方法可以简单得到
 	 */
-	public void writeData(int pgno, byte[] data){
+	public void appendData(int pgno, byte[] data){
 		Page page = this.pages[pgno];
-		page.fillData(data);
+		page.appendData(data);
 	}
 	/**
 	 * 读取指定页面中的数据

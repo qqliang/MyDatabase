@@ -10,6 +10,7 @@ import com.database.global.Utils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -31,6 +32,32 @@ public class Page {
     private byte nCell;                                  //当前页面中cell的数量
     private List<Integer> cells;                         //Cell中：rowid
 
+    //其他
+    private int size;
+    private byte[] data;
+    private List<PgHdr> dirtyPages;
+    private short nRef;
+
+    //数据域。内部结点：存储页号；叶子结点：存储记录
+    private int sectorSize;
+    private int reserved;                               //页面保留的空间
+    private int headerSize;
+
+    public Page(){
+        this.size = SpaceAllocation.PAGE_SIZE;
+        this.data = new byte[this.size];
+        this.sectorSize = SpaceAllocation.SECTOR_SIZE;
+        this.reserved = SpaceAllocation.PAGE_RESERVED;
+        this.headerSize = SpaceAllocation.PAGE_HEADER_SIZE;
+
+        setCells(null);
+        setPageType((byte)0);
+        setpChild(0);
+        setPgno(0);
+        setOffset(this.size);
+    }
+
+    //————————————————属性的getter setter————————————————
     public void setnCell(byte nCell) {
         this.nCell = nCell;
         this.data[Position.CELLNUM_IN_PAGE] = this.nCell;
@@ -101,28 +128,6 @@ public class Page {
         }
     }
 
-    //其他
-    private int size;
-    private byte[] data;
-    //数据域。内部结点：存储页号；叶子结点：存储记录
-    private int sectorSize;
-    private int reserved;                               //页面保留的空间
-    private int headerSize;
-                                                        //系统分配的rowid
-
-    public Page(){
-        this.size = SpaceAllocation.PAGE_SIZE;
-        this.data = new byte[this.size];
-        this.sectorSize = SpaceAllocation.SECTOR_SIZE;
-        this.reserved = SpaceAllocation.PAGE_RESERVED;
-        this.headerSize = SpaceAllocation.PAGE_HEADER_SIZE;
-
-        setCells(null);
-        setPageType((byte)0);
-        setpChild(0);
-        setPgno(0);
-        setOffset(this.size);
-    }
     public void updateData(){
         toString();
         Utils.fillInt(this.pgno, this.data, Position.PGNO_IN_PAGE);
@@ -265,11 +270,36 @@ public class Page {
         }
 
     }
+    public void fillData(List<Map.Entry<Integer, byte[]>> entryList){
+        if(entryList == null || entryList.size() == 0)
+            return ;
+        Map.Entry<Integer, byte[]> entry = null;
+        int usable = getUsable() ;
+        List<Integer> rowidList = new ArrayList<Integer>(entryList.size());
+        int offset = this.size;
+        for(int i = 0;i < entryList.size(); i++){
+            entry = entryList.get(i);
+            rowidList.add(entry.getKey());
+            byte[] data = entry.getValue();
+            usable -= entry.getValue().length;
+            offset -= entry.getValue().length;
+            if(usable < 0){
+                /**
+                 * 添加溢出页面
+                 */
+            }else{
+                this.data = Utils.fillBytes(data, this.data, offset);
+            }
+        }
+        setCells(rowidList);
+        setOffset((short)offset);
+    }
+
     /**
-     *  设置指定位置数据
+     *  设置指定位置追加数据（有Bug，追加数据后rowid为追加）
      * @param bytes    要添加的数据
      */
-    public byte[] fillData( byte[] bytes){
+    public byte[] appendData( byte[] bytes){
         if(bytes == null || bytes.length == 0)
             return null;
 
@@ -279,10 +309,6 @@ public class Page {
              * 添加溢出页面
              */
         }else{
-            if(this.pgno == 1){
-                System.out.println("offset "+this.offset);
-                System.out.println("bytes len:"+bytes.length);
-            }
             int start = this.offset - bytes.length;
             this.data = Utils.fillBytes(bytes, this.data, start);
             setOffset((short)start);
