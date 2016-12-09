@@ -5,10 +5,11 @@ package com.database.myBplusTree;
  */
 import com.database.global.ColumnConstraint;
 import com.database.global.DataType;
+import com.database.global.PageType;
 import com.database.pager.Column;
 import com.database.pager.Page;
 import com.database.pager.Pager;
-import com.database.pager.Record;
+import com.database.pager.TableSchema;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -18,77 +19,33 @@ public class BplusNode {
 
     Pager pager ;
     Page page;
+    TableSchema schema;
 
-    private int flags;                //节点类型：0：根节点；1：内部节点；2：叶子节点；
     private BplusNode parent;         //父节点
     private BplusNode previous;       //叶子节点的前一个节点
     private BplusNode next;           //叶子节点的下一个节点
     private List<BplusNode> children; //孩子节点
 
     //记录信息：rowid->data。若为内部节点，data为孩子节点的页号，若为叶子节点，data为一条记录
-    private List<Entry<Integer, String>> entries;
-
-    public int getFlags() {
-        return flags;
-    }
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
-
-    public BplusNode getParent() {
-        return parent;
-    }
-    public void setParent(BplusNode parent) {
-        this.parent = parent;
-    }
-
-    public BplusNode getPrevious() {
-        return previous;
-    }
-    public void setPrevious(BplusNode previous) {
-        this.previous = previous;
-    }
-
-    public BplusNode getNext() {
-        return next;
-    }
-    public void setNext(BplusNode next) {
-        this.next = next;
-    }
-
-    public List<BplusNode> getChildren() {
-        return children;
-    }
-    public void setChildren(List<BplusNode> children) {
-        this.children = children;
-    }
-
-    public List<Entry<Integer, String>> getEntries() {
-        return entries;
-    }
-    public void setEntries(List<Entry<Integer, String>> entries) {
-        this.entries = entries;
-    }
+     List<Entry<Integer, String>> entries;
 
     /**
      * 构造函数
      */
-    public BplusNode(int type) {
-        this.flags = type;
+    public BplusNode(Pager pager, byte type) {
+        /* 构造一个新的节点，向pager请求分配一个新的页面，并设置页面类型 */
+        this.pager = pager;
+        this.page = pager.newPage();
+        this.page.setPageType(type);
+
         entries = new ArrayList<Entry<Integer, String>>();
-
-        //如果不是叶子节点，则添加孩子指针
-        if (type != 2) {
-            children = new ArrayList<BplusNode>();
-        }
-
-        //新建页面
-//        page = pager.getPage();
     }
 
-    public BplusNode(Pager pager,int type) {
-        this(type);
+    public BplusNode(Pager pager, Page page) {
+        /* 从page中读取内容，构造一个节点 */
         this.pager = pager;
+        this.page = page;
+        this.entries = pager.readRecord(page.getPgno());
     }
 
     /**
@@ -96,7 +53,7 @@ public class BplusNode {
      */
     public String get(Integer key) {
         //如果是叶子节点
-        if (flags == 2) {
+        if (page.getPageType() == PageType.TABLE_LEAF) {
             int low = 0, high = entries.size() - 1, mid;
             int comp ;
             while (low <= high) {
@@ -115,10 +72,12 @@ public class BplusNode {
         }
         /**
          * 如果不是叶子节点
-         * 1、如果key小于节点最左边的key，沿第一个子节点继续搜索
-         * 2、如果key大于等于节点最右边的key，沿最后一个子节点继续搜索
-         * 3、否则沿比key大的前一个子节点继续搜索
+         * 1、清空子节点；并从页面中加载子节点
+         * 2、如果key小于节点最左边的key，沿第一个子节点继续搜索
+         * 3、如果key大于等于节点最右边的key，沿最后一个子节点继续搜索
+         * 4、否则沿比key大的前一个子节点继续搜索
          */
+        loadChildren();
         if (key.compareTo(entries.get(0).getKey()) < 0) {
             return children.get(0).get(key);
         }else if (key.compareTo(entries.get(entries.size()-1).getKey()) >= 0) {
@@ -141,11 +100,19 @@ public class BplusNode {
         }
     }
 
+    /* 加载子节点 */
+    public void loadChildren(){
+        children.clear();
+        for(int i=0;i<entries.size();i++){
+            Integer pgno = Integer.parseInt(entries.get(i).getValue());
+            BplusNode temp = new BplusNode(pager,pager.loadPage(pgno));
+            children.add(temp);
+        }
+    }
+
     public void insertOrUpdate(Integer key, String value, BplusTree tree){
-        /**
-         * 如果是叶子节点
-         */
-        if (flags == 2){
+        /* 如果是叶子节点 */
+        if (page.getPageType() == PageType.TABLE_LEAF){
             /**
              * 不需要分裂的情况：
              * 1、节点中包含该关键字，则直接修改数据域
@@ -161,9 +128,6 @@ public class BplusNode {
             /**
              * 需要分裂的情况：节点不包含该关键字，且该节点已满，则分裂节点
              */
-            //分裂成左右两个节点
-            BplusNode left = new BplusNode(pager,1);
-            BplusNode right = new BplusNode(pager,1);
             /**
              * 设置链接
              * 1、创建两个新的节点：left、right；
@@ -176,21 +140,41 @@ public class BplusNode {
              * 4、left的next指针指向right，right的previous指针指向left
              * 5、把当前节点的previous、next指针赋值为NULL
              */
-            if (previous != null){
+            BplusNode left = new BplusNode(pager,PageType.TABLE_LEAF);
+            BplusNode right = new BplusNode(pager,PageType.TABLE_LEAF);
+
+            if (page.getpPrev() != 0){
+                previous = new BplusNode(pager,pager.loadPage(page.getpPrev()));
+
                 previous.next = left;
+                previous.page.setpNext(left.page.getPgno());
+
                 left.previous = previous ;
+                left.page.setpPrev(previous.page.getPgno());
             }
-            if (next != null) {
+            if (page.getpNext() != 0) {
+                next = new BplusNode(pager, pager.loadPage(page.getpNext()));
+
                 next.previous = right;
+                next.page.setpPrev(right.page.getPgno());
+
                 right.next = next;
+                right.page.setpNext(next.page.getPgno());
             }
-            if (previous == null){
+            if (page.getpPrev() == 0){
                 tree.setHead(left);
             }
             left.next = right;
+            left.page.setpNext(right.page.getPgno());
+
             right.previous = left;
+            right.page.setpPrev(left.page.getPgno());
+
             previous = null;
+            page.setpPrev(0);
+
             next = null;
+            page.setpNext(0);
 
             /**
              * 将当前节点的entry分给left和right节点
@@ -216,8 +200,9 @@ public class BplusNode {
              *      5)parent节点的entries记录赋值为当前节点的entries
              *      6)清空当前节点的指针和记录
              */
-            if (parent != null) {
+            if (page.getpParent() != 0) {
                 //调整父子节点关系
+                loadChildren();
                 int index = parent.children.indexOf(this);
                 parent.children.remove(this);
                 left.parent = parent;
@@ -331,22 +316,14 @@ public class BplusNode {
          *      5)parent节点的entries记录赋值为当前节点的entries
          *      6)清空当前节点的指针和记录
          */
-        if (children.size() > tree.getOrder()) {
+        if (entries.size() > tree.getOrder()) {
             //分裂成左右两个节点
-            BplusNode left = new BplusNode(pager,1);
-            BplusNode right = new BplusNode(pager,1);
+            BplusNode left = new BplusNode(pager,PageType.TABLE_INTERNAL);
+            BplusNode right = new BplusNode(pager,PageType.TABLE_INTERNAL);
             //左右两个节点子节点的长度
             int leftSize = (tree.getOrder() + 1) / 2 + (tree.getOrder() + 1) % 2;
             int rightSize = (tree.getOrder() + 1) / 2;
             //复制子节点到分裂出来的新节点，并更新关键字
-            for (int i = 0; i < leftSize; i++){
-                left.children.add(children.get(i));
-                children.get(i).parent = left;
-            }
-            for (int i = 0; i < rightSize; i++){
-                right.children.add(children.get(leftSize + i));
-                children.get(leftSize + i).parent = right;
-            }
             for (int i = 0; i < leftSize - 1; i++) {
                 left.entries.add(entries.get(i));
             }
@@ -355,34 +332,28 @@ public class BplusNode {
             }
 
             //如果不是根节点
-            if (parent != null) {
+            if (page.getpParent() != 0) {
                 //调整父子节点关系
-                int index = parent.children.indexOf(this);
-                parent.children.remove(this);
-                left.parent = parent;
-                right.parent = parent;
-                parent.children.add(index,left);
-                parent.children.add(index + 1, right);
-                parent.entries.add(index,entries.get(leftSize - 1));
+                Page p = pager.loadPage(page.getpParent());
+                BplusNode parent = new BplusNode(pager, p);
+                left.page.setpParent(page.getpParent());
+                right.page.setpParent(page.getpParent());
+                parent.entries.add(entries.get(leftSize - 1));
                 entries = null;
-                children = null;
 
                 //父节点更新关键字
                 parent.updateInsert(tree);
                 parent = null;
                 //如果是根节点
             }else {
-                flags = 1;
-                BplusNode parent = new BplusNode(pager, 0);
+                page.setPageType(PageType.TABLE_INTERNAL);
+                BplusNode parent = new BplusNode(pager, PageType.TABLE_ROOT);
                 tree.setRoot(parent);
                 tree.setHeight(tree.getHeight() + 1);
-                left.parent = parent;
-                right.parent = parent;
-                parent.children.add(left);
-                parent.children.add(right);
+                left.page.setpParent(parent.page.getPgno());
+                right.page.setpParent(parent.page.getPgno());
                 parent.entries.add(entries.get(leftSize - 1));
                 entries = null;
-                children = null;
             }
         }
     }
@@ -391,43 +362,34 @@ public class BplusNode {
     protected void updateRemove(BplusTree tree) {
 
         // 如果子节点数小于M / 2或者小于2，则需要合并节点
-        if (children.size() < tree.getOrder() / 2 || children.size() < 2) {
-            if (flags == 0) {
+        if (entries.size() < tree.getOrder() / 2 || entries.size() < 2) {
+            if (page.getPageType() == PageType.TABLE_ROOT) {
                 // 如果是根节点并且子节点数大于等于2，OK
-                if (children.size() >= 2) return;
+                if (entries.size() >= 2) return;
                 // 否则与子节点合并
-                BplusNode root = children.get(0);
+                Page p = pager.loadPage(Integer.parseInt(entries.get(0).getValue()));
+                BplusNode root = new BplusNode(pager, p);
                 tree.setRoot(root);
                 tree.setHeight(tree.getHeight() - 1);
-                root.parent = null;
-                root.flags = 0;
+                root.page.setpParent(0);
+                root.page.setPageType(PageType.TABLE_ROOT);
                 entries = null;
-                children = null;
                 return ;
-            }
-            //计算前后节点
-            int currIdx = parent.children.indexOf(this);
-            int prevIdx = currIdx - 1;
-            int nextIdx = currIdx + 1;
-            BplusNode previous = null, next = null;
-            if (prevIdx >= 0) {
-                previous = parent.children.get(prevIdx);
-            }
-            if (nextIdx < parent.children.size()) {
-                next = parent.children.get(nextIdx);
             }
 
             // 如果前节点子节点数大于M / 2并且大于2，则从其处借补
-            if (previous != null
-                    && previous.children.size() > tree.getOrder() / 2
-                    && previous.children.size() > 2) {
+            BplusNode previous = new BplusNode(pager, pager.loadPage(page.getpPrev()));
+            if (page.getpPrev() != 0
+                    && previous.entries.size() > tree.getOrder() / 2
+                    && previous.entries.size() > 2) {
                 //前叶子节点末尾节点添加到首位
-                int idx = previous.children.size() - 1;
-                BplusNode borrow = previous.children.get(idx);
-                previous.children.remove(idx);
-                borrow.parent = this;
-                children.add(0, borrow);
-                int preIndex = parent.children.indexOf(previous);
+                int idx = previous.entries.size() - 1;
+                Integer pgno = Integer.parseInt(previous.entries.get(idx).getValue());
+                BplusNode borrow = new BplusNode(pager, pager.loadPage(pgno));
+                borrow.page.setpParent(page.getPgno());
+
+                BplusNode parent = new BplusNode(pager, pager.loadPage(page.getpParent()));
+                int preIndex = parent.entries.indexOf(previous);
 
                 entries.add(0,parent.entries.get(preIndex));
                 parent.entries.set(preIndex, previous.entries.remove(idx - 1));
@@ -435,47 +397,50 @@ public class BplusNode {
             }
 
             // 如果后节点子节点数大于M / 2并且大于2，则从其处借补
-            if (next != null
-                    && next.children.size() > tree.getOrder() / 2
-                    && next.children.size() > 2) {
+            BplusNode next = new BplusNode(pager, pager.loadPage(page.getpNext()));
+            if (page.getpNext() != 0
+                    && next.entries.size() > tree.getOrder() / 2
+                    && next.entries.size() > 2) {
                 //后叶子节点首位添加到末尾
-                BplusNode borrow = next.children.get(0);
-                next.children.remove(0);
-                borrow.parent = this;
-                children.add(borrow);
-                int preIndex = parent.children.indexOf(this);
+                Integer pgno = Integer.parseInt(next.entries.get(0).getValue());
+                BplusNode borrow = new BplusNode(pager, pager.loadPage(pgno));
+                next.entries.remove(0);
+                borrow.page.setpParent(page.getPgno());
+
+                BplusNode parent = new BplusNode(pager,pager.loadPage(page.getpParent()));
+
+                int preIndex = parent.entries.indexOf(this);
                 entries.add(parent.entries.get(preIndex));
                 parent.entries.set(preIndex, next.entries.remove(0));
                 return ;
             }
 
             // 同前面节点合并
-            if (previous != null
-                    && (previous.children.size() <= tree.getOrder() / 2
-                    || previous.children.size() <= 2)) {
-                for (int i = 0; i < children.size(); i++) {
-                    previous.children.add(children.get(i));
+            BplusNode parent = new BplusNode(pager,pager.loadPage(page.getpParent()));
+            if (page.getpPrev() != 0
+                    && (previous.entries.size() <= tree.getOrder() / 2
+                    || previous.entries.size() <= 2)) {
+                for (int i = 0; i < entries.size(); i++) {
+                    previous.entries.add(entries.get(i));
                 }
-                for(int i = 0; i < previous.children.size();i++){
-                    previous.children.get(i).parent = this;
+                for(int i = 0; i < previous.entries.size();i++){
+//                    previous.children.get(i).parent = this;
                 }
-                int indexPre = parent.children.indexOf(previous);
+                int indexPre = parent.entries.indexOf(previous);
                 previous.entries.add(parent.entries.get(indexPre));
                 for (int i = 0; i < entries.size(); i++) {
                     previous.entries.add(entries.get(i));
                 }
-                children = previous.children;
                 entries = previous.entries;
 
                 //更新父节点的关键字列表
-                parent.children.remove(previous);
-                previous.parent = null;
-                previous.children = null;
+                parent.entries.remove(previous);
+                previous.page.setpParent(0);
                 previous.entries = null;
-                parent.entries.remove(parent.children.indexOf(this));
-                if((!(parent.flags==0) && (parent.children.size() >= tree.getOrder() / 2
-                        && parent.children.size() >= 2))
-                        ||(parent.flags==0) && parent.children.size() >= 2){
+                parent.entries.remove(parent.entries.indexOf(this));
+                if((!(parent.page.getPageType()==0) && (parent.entries.size() >= tree.getOrder() / 2
+                        && parent.entries.size() >= 2))
+                        ||(parent.page.getPageType()==0) && parent.entries.size() >= 2){
                     return ;
                 }
                 parent.updateRemove(tree);
@@ -483,27 +448,27 @@ public class BplusNode {
             }
 
             // 同后面节点合并
-            if (next != null
-                    && (next.children.size() <= tree.getOrder() / 2
-                    || next.children.size() <= 2)) {
-                for (int i = 0; i < next.children.size(); i++) {
-                    BplusNode child = next.children.get(i);
-                    children.add(child);
-                    child.parent = this;
+            if (page.getpNext() != 0
+                    && (next.entries.size() <= tree.getOrder() / 2
+                    || next.entries.size() <= 2)) {
+                for (int i = 0; i < next.entries.size(); i++) {
+                    Integer pgno = Integer.parseInt(next.entries.get(i).getValue());
+                    BplusNode child = new BplusNode(pager, pager.loadPage(pgno));
+//                    entries.add(child.entries.get(0).getValue(), child.page.getPgno());
+                    child.page.setpParent(page.getPgno());
                 }
-                int index = parent.children.indexOf(this);
+                int index = parent.entries.indexOf(entries.get(0).getKey());
                 entries.add(parent.entries.get(index));
                 for (int i = 0; i < next.entries.size(); i++) {
                     entries.add(next.entries.get(i));
                 }
-                parent.children.remove(next);
-                next.parent = null;
-                next.children = null;
+                parent.entries.remove(next.entries.get(0).getKey());
+                next.page.setpParent(0);
                 next.entries = null;
-                parent.entries.remove(parent.children.indexOf(this));
-                if((!(parent.flags==0) && (parent.children.size() >= tree.getOrder() / 2
-                        && parent.children.size() >= 2))
-                        ||(parent.flags==0) && parent.children.size() >= 2){
+                parent.entries.remove(parent.entries.indexOf(entries.get(0).getKey()));
+                if((!(parent.page.getPageType() == PageType.TABLE_ROOT ) && (parent.entries.size() >= tree.getOrder() / 2
+                        && parent.entries.size() >= 2))
+                        ||(parent.page.getPageType() == PageType.TABLE_ROOT ) && parent.entries.size() >= 2){
                     return ;
                 }
                 parent.updateRemove(tree);
@@ -514,13 +479,13 @@ public class BplusNode {
 
     public String remove(Integer key, BplusTree tree){
         //如果是叶子节点
-        if (flags == 2){
+        if (page.getPageType() == PageType.TABLE_LEAF){
             //如果不包含该关键字，则直接返回
             if (contains(key) == -1){
                 return null;
             }
             //如果既是叶子节点又是根节点，直接删除
-            if (flags == 0) {
+            if (page.getPageType() == PageType.TABLE_ROOT) {
                 if(entries.size() == 1){
                     tree.setHeight(0);
                 }
@@ -531,31 +496,34 @@ public class BplusNode {
                 return remove(key);
             }
             //如果自身关键字数小于M / 2，并且前节点关键字数大于M / 2，则从其处借补
-            if (previous != null &&
-                    previous.parent == parent
+            BplusNode previous = new BplusNode(pager, pager.loadPage(page.getpPrev()));
+            BplusNode parent = new BplusNode(pager, pager.loadPage(page.getpParent()));
+            if (page.getpPrev() != 0 &&
+                    previous.page.getpParent() == page.getpParent()
                     && previous.entries.size() > tree.getOrder() / 2
                     && previous.entries.size() > 2 ) {
                 //添加到首位
                 int size = previous.entries.size();
                 entries.add(0, previous.entries.remove(size - 1));
-                int index = parent.children.indexOf(previous);
+                int index = parent.entries.indexOf(previous.entries.get(0).getKey());
                 parent.entries.set(index, entries.get(0));
                 return remove(key);
             }
             //如果自身关键字数小于M / 2，并且后节点关键字数大于M / 2，则从其处借补
-            if (next != null
-                    && next.parent == parent
+            BplusNode next = new BplusNode(pager, pager.loadPage(page.getpNext()));
+            if (page.getpNext() != 0
+                    && next.page.getpParent() == page.getpParent()
                     && next.entries.size() > tree.getOrder() / 2
                     && next.entries.size() > 2) {
                 entries.add(next.entries.remove(0));
-                int index = parent.children.indexOf(this);
+                int index = parent.entries.indexOf(entries.get(0).getKey());
                 parent.entries.set(index, next.entries.get(0));
                 return remove(key);
             }
 
             //同前面节点合并
             if (previous != null
-                    && previous.parent == parent
+                    && previous.page.getpParent() == page.getpParent()
                     && (previous.entries.size() <= tree.getOrder() / 2
                     || previous.entries.size() <= 2)) {
                 String returnValue =  remove(key);
@@ -564,25 +532,25 @@ public class BplusNode {
                     previous.entries.add(entries.get(i));
                 }
                 entries = previous.entries;
-                parent.children.remove(previous);
-                previous.parent = null;
+                parent.entries.remove(previous.entries.get(0).getKey());
+                previous.page.setpParent(0);
                 previous.entries = null;
                 //更新链表
-                if (previous.previous != null) {
+                if (previous.page.getpPrev() != 0) {
                     BplusNode temp = previous;
-                    temp.previous.next = this;
-                    previous = temp.previous;
-                    temp.previous = null;
-                    temp.next = null;
+                    new BplusNode(pager, pager.loadPage(temp.page.getpPrev())).page.setpNext(page.getPgno());
+                    page.setpPrev(temp.page.getpPrev());
+                    temp.page.setpPrev(0);
+                    temp.page.setpNext(0);
                 }else {
                     tree.setHead(this);
-                    previous.next = null;
-                    previous = null;
+                    previous.page.setpNext(0);
+                    page.setpPrev(0);
                 }
-                parent.entries.remove(parent.children.indexOf(this));
-                if((!(parent.flags==0) && (parent.children.size() >= tree.getOrder() / 2
-                        && parent.children.size() >= 2))
-                        ||(parent.flags==0) && parent.children.size() >= 2){
+                parent.entries.remove(parent.entries.indexOf(entries.get(0).getKey()));
+                if((!(parent.page.getPageType() == PageType.TABLE_ROOT) && (parent.entries.size() >= tree.getOrder() / 2
+                        && parent.entries.size() >= 2))
+                        ||(parent.page.getPageType() == PageType.TABLE_ROOT) && parent.entries.size() >= 2){
                     return returnValue;
                 }
                 parent.updateRemove(tree);
@@ -590,7 +558,7 @@ public class BplusNode {
             }
             //同后面节点合并
             if(next != null
-                    && next.parent == parent
+                    && next.page.getpParent() == page.getpParent()
                     && (next.entries.size() <= tree.getOrder() / 2
                     || next.entries.size() <= 2)) {
                 String returnValue = remove(key);
@@ -598,25 +566,25 @@ public class BplusNode {
                     //从首位开始添加到末尾
                     entries.add(next.entries.get(i));
                 }
-                next.parent = null;
+                next.page.setpParent(0);
                 next.entries = null;
-                parent.children.remove(next);
+                parent.entries.remove(next);
                 //更新链表
-                if (next.next != null) {
+                if (next.page.getpNext() != 0) {
                     BplusNode temp = next;
-                    temp.next.previous = this;
-                    next = temp.next;
-                    temp.previous = null;
-                    temp.next = null;
+                    new BplusNode(pager, pager.loadPage(temp.page.getpNext())).page.setpPrev(page.getPgno());
+                    page.setpNext(temp.page.getpNext());
+                    temp.page.setpPrev(0);
+                    temp.page.setpNext(0);
                 }else {
-                    next.previous = null;
+                    next.page.setpPrev(0);
                     next = null;
                 }
                 //更新父节点的关键字列表
-                parent.entries.remove(parent.children.indexOf(this));
-                if((!(parent.flags==0) && (parent.children.size() >= tree.getOrder() / 2
-                        && parent.children.size() >= 2))
-                        ||(parent.flags==0) && parent.children.size() >= 2){
+                parent.entries.remove(parent.entries.indexOf(entries.get(0).getKey()));
+                if((!(parent.page.getPageType() == PageType.TABLE_ROOT) && (parent.entries.size() >= tree.getOrder() / 2
+                        && parent.entries.size() >= 2))
+                        ||(parent.page.getPageType() == PageType.TABLE_ROOT) && parent.entries.size() >= 2){
                     return returnValue;
                 }
                 parent.updateRemove(tree);
@@ -626,11 +594,17 @@ public class BplusNode {
         /*如果不是叶子节点*/
 
         //如果key小于等于节点最左边的key，沿第一个子节点继续搜索
+        Integer pgno;
+        BplusNode children;
         if (key.compareTo(entries.get(0).getKey()) < 0) {
-            return children.get(0).remove(key, tree);
+            pgno = Integer.parseInt(entries.get(0).getValue());
+            children = new BplusNode(pager, pager.loadPage(pgno));
+            return children.remove(key, tree);
             //如果key大于节点最右边的key，沿最后一个子节点继续搜索
         }else if (key.compareTo(entries.get(entries.size()-1).getKey()) >= 0) {
-            return children.get(children.size()-1).remove(key, tree);
+            pgno = Integer.parseInt(entries.get(entries.size()-1).getValue());
+            children = new BplusNode(pager, pager.loadPage(pgno));
+            return children.remove(key, tree);
             //否则沿比key大的前一个子节点继续搜索
         }else {
             int low = 0, high = entries.size() - 1, mid= 0;
@@ -639,14 +613,18 @@ public class BplusNode {
                 mid = (low + high) / 2;
                 comp = entries.get(mid).getKey().compareTo(key);
                 if (comp == 0) {
-                    return children.get(mid + 1).remove(key, tree);
+                    pgno = Integer.parseInt(entries.get(mid + 1).getValue());
+                    children = new BplusNode(pager, pager.loadPage(pgno));
+                    return children.remove(key, tree);
                 } else if (comp < 0) {
                     low = mid + 1;
                 } else {
                     high = mid - 1;
                 }
             }
-            return children.get(low).remove(key, tree);
+            pgno = Integer.parseInt(entries.get(low).getValue());
+            children = new BplusNode(pager, pager.loadPage(pgno));
+            return children.remove(key, tree);
         }
     }
 
@@ -711,41 +689,7 @@ public class BplusNode {
         return null;
     }
     public String toString(){
-        StringBuilder sb = new StringBuilder();
-        sb.append("flags: ");
-        sb.append(flags);
-        sb.append(", ");
-        sb.append("keys: ");
-        for (Entry<Integer,String> entry : entries){
-            sb.append(entry.getKey());
-            sb.append(", ");
-        }
-        sb.append(", ");
-        return sb.toString();
+        return page.toString();
 
-    }
-    public Record getRecord() {
-        Record record = new Record();
-        List<Column> cols = new ArrayList<Column>();
-        Column idCol =  new Column();
-        idCol.setName("id");
-        idCol.setType(DataType.INTEGER);
-        idCol.setConstraint(ColumnConstraint.NONE);
-
-        Column nameCol =  new Column();
-        nameCol.setName("name");
-        nameCol.setType(DataType.TEXT);
-        nameCol.setConstraint(ColumnConstraint.NONE);
-
-        Column ageCol =  new Column();
-        ageCol.setName("age");
-        ageCol.setType(DataType.TINY_INT);
-        ageCol.setConstraint(ColumnConstraint.NONE);
-
-        cols.add(idCol);
-        cols.add(nameCol);
-        cols.add(ageCol);
-        record.setColumns(cols);
-        return record;
     }
 }

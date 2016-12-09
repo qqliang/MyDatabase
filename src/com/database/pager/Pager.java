@@ -21,7 +21,8 @@ public class Pager {
 		this.pCache = null;
 		this.pageNum = 1000;
 		initPages();
-		this.freeList = Arrays.asList(this.pages);
+		this.freeList = new ArrayList<>();
+		this.freeList.addAll(Arrays.asList(this.pages));
 	}
 
 	public Page[] getPages() {
@@ -379,8 +380,8 @@ public class Pager {
 		}
 	}
 	public Page newPage(){
-		Page newPage = freeList.remove(1);
-		freeList.remove(1);
+		Page newPage = freeList.get(1);
+		((ArrayList)freeList).remove(1);
 		return newPage;
 	}
 	public void freePage(int pgno){
