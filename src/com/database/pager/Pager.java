@@ -12,6 +12,7 @@ public class Pager {
 	Page[] pages;
 	int pageNum;
 
+	private List<Page> freeList;
 	private int mxPgno;
 
 	public Pager(Database database) {
@@ -20,6 +21,7 @@ public class Pager {
 		this.pCache = null;
 		this.pageNum = 1000;
 		initPages();
+		this.freeList = Arrays.asList(this.pages);
 	}
 
 	public Page[] getPages() {
@@ -278,6 +280,12 @@ public class Pager {
 
 		}
 	}
+
+	/**
+	 *
+	 * @param pgno 页号
+	 * @return
+	 */
 	public Page loadPage(int pgno){
 		if(pgno <= 0)
 			return null;
@@ -293,7 +301,7 @@ public class Pager {
 			byte[] data = new byte[SpaceAllocation.PAGE_SIZE];
 			raf.read(data, 0 , SpaceAllocation.PAGE_SIZE);
 
-			newPage = new Page();
+			newPage = freeList.get(pgno);
 			newPage.setSize(SpaceAllocation.PAGE_SIZE);
 			newPage.setSectorSize(SpaceAllocation.SECTOR_SIZE);
 			newPage.setData(data);
@@ -302,6 +310,7 @@ public class Pager {
 			newPage.setPgno(Utils.loadIntFromBytes(data, Position.PGNO_IN_PAGE));
 
 			this.pages[pgno] = newPage;
+			freeList.remove(pgno);
 			return newPage;
 		}catch (IOException e){
 			e.printStackTrace();
@@ -370,8 +379,8 @@ public class Pager {
 		}
 	}
 	public Page newPage(){
-		Page page = new Page();
-		return page;
+
+		return freeList.get(1);
 	}
 	public void freePage(int pgno){
 	}
