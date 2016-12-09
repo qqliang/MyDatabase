@@ -482,8 +482,6 @@ public class Pager {
 				}
 				page.setPgno(Utils.loadIntFromBytes(page.getData(), Position.PGNO_IN_PAGE));
 				page.setPageType(page.getData()[Position.PGTYPE_IN_PAGE]);
-				if(pgno == 1)
-				System.out.println(pgno+",offset:"+Utils.loadIntFromBytes(page.getData(), Position.OFFSET_IN_PAGE));
 				page.setOffset(Utils.loadIntFromBytes(page.getData(), Position.OFFSET_IN_PAGE));
 				page.setOverflowPgno(Utils.loadIntFromBytes(page.getData(), Position.OVERFLOWPGNO_IN_PAGE));
 				page.setpChild(Utils.loadIntFromBytes(page.getData(), Position.CHILDPAGE_IN_PAGE));
@@ -503,6 +501,12 @@ public class Pager {
 				e.printStackTrace();
 			}
 		}
+	}
+	public Page newPage(){
+		Page page = new Page();
+		return null;
+	}
+	public void freePage(int pgno){
 	}
 	private void resizePages()
 	{
