@@ -13,6 +13,9 @@ public class Pager {
 	PCache pCache;
 	Page[] pages;
 	int pageNum;
+
+	private int mxPgno;
+
 	public Pager(Database database) {
 		this.database = database;
 //		this.journal = new File(this.database.getDBName()+"-journal");
