@@ -37,6 +37,8 @@ public class BplusNode {
         this.pager = pager;
         this.page = pager.newPage();
         this.page.setPageType(type);
+        this.schema = getSchema();
+        this.children = new ArrayList<>();
 
         entries = new ArrayList<Entry<Integer, String>>();
     }
@@ -46,6 +48,9 @@ public class BplusNode {
         this.pager = pager;
         this.page = page;
         this.entries = pager.readRecord(page.getPgno());
+        Collections.reverse(this.entries);
+        this.schema = getSchema();
+        this.children = new ArrayList<>();
     }
 
     /**
@@ -77,7 +82,7 @@ public class BplusNode {
          * 3、如果key大于等于节点最右边的key，沿最后一个子节点继续搜索
          * 4、否则沿比key大的前一个子节点继续搜索
          */
-        loadChildren();
+        loadChildren(this);
         if (key.compareTo(entries.get(0).getKey()) < 0) {
             return children.get(0).get(key);
         }else if (key.compareTo(entries.get(entries.size()-1).getKey()) >= 0) {
@@ -101,12 +106,12 @@ public class BplusNode {
     }
 
     /* 加载子节点 */
-    public void loadChildren(){
-        children.clear();
-        for(int i=0;i<entries.size();i++){
-            Integer pgno = Integer.parseInt(entries.get(i).getValue());
+    public void loadChildren(BplusNode node){
+        node.children.clear();
+        for(int i=0;i<node.entries.size();i++){
+            Integer pgno = Integer.parseInt(node.entries.get(i).getValue());
             BplusNode temp = new BplusNode(pager,pager.loadPage(pgno));
-            children.add(temp);
+            node.children.add(temp);
         }
     }
 
@@ -144,13 +149,16 @@ public class BplusNode {
             BplusNode right = new BplusNode(pager,PageType.TABLE_LEAF);
 
             if (page.getpPrev() != 0){
-                previous = new BplusNode(pager,pager.loadPage(page.getpPrev()));
+                if(previous == null)
+                    previous = new BplusNode(pager,pager.loadPage(page.getpPrev()));
 
                 previous.next = left;
                 previous.page.setpNext(left.page.getPgno());
 
                 left.previous = previous ;
                 left.page.setpPrev(previous.page.getPgno());
+            }else{
+                tree.setHead(left);
             }
             if (page.getpNext() != 0) {
                 next = new BplusNode(pager, pager.loadPage(page.getpNext()));
@@ -160,9 +168,6 @@ public class BplusNode {
 
                 right.next = next;
                 right.page.setpNext(next.page.getPgno());
-            }
-            if (page.getpPrev() == 0){
-                tree.setHead(left);
             }
             left.next = right;
             left.page.setpNext(right.page.getPgno());
@@ -202,32 +207,51 @@ public class BplusNode {
              */
             if (page.getpParent() != 0) {
                 //调整父子节点关系
-                loadChildren();
+                if(parent == null){
+                    parent = new BplusNode(pager,pager.loadPage(page.getpParent()));
+                    loadChildren(parent);
+                }
                 int index = parent.children.indexOf(this);
                 parent.children.remove(this);
+
                 left.parent = parent;
+                left.page.setpParent(page.getpParent());
+
                 right.parent = parent;
+                right.page.setpParent(page.getpParent());
+
                 parent.children.add(index,left);
                 parent.children.add(index + 1, right);
-                parent.entries.add(index,right.entries.get(0));
-                entries = null; //删除当前节点的关键字信息
-                children = null; //删除当前节点的孩子节点引用
+
+                parent.entries.set(index,new SimpleEntry<Integer, String>(
+                        left.entries.get(0).getKey(),String.valueOf(left.page.getPgno())));
+                parent.entries.add(index+1,new SimpleEntry<Integer, String>(
+                        right.entries.get(0).getKey(),String.valueOf(right.page.getPgno())));
 
                 //父节点插入或更新关键字
                 parent.updateInsert(tree);
-                parent = null; //删除当前节点的父节点引用
+
+                page.setPageType((byte)0);
+                pager.freePage(page.getPgno());
                 //如果是根节点
             }else {
-                flags = 1;
-                BplusNode parent = new BplusNode (pager, 0);
-                tree.setRoot(parent);
-                left.parent = parent;
-                right.parent = parent;
-                parent.children.add(left);
-                parent.children.add(right);
-                parent.entries.add(right.entries.get(0));
-                entries = null;
-                children = null;
+                page.setPageType(PageType.TABLE_ROOT);
+
+                left.parent = this;
+                left.page.setpParent(page.getPgno());
+                right.parent = this;
+                right.page.setpParent(page.getPgno());
+
+                children.clear();
+                this.children.add(left);
+                this.children.add(right);
+
+                entries.clear();
+                entries.add(new SimpleEntry<Integer, String>(
+                        left.entries.get(0).getKey(),String.valueOf(left.page.getPgno())));
+                entries.add(new SimpleEntry<Integer, String>(
+                        right.entries.get(0).getKey(),String.valueOf(right.page.getPgno())));
+                flushPage(entries,this);
             }
             return ;
         }
@@ -290,6 +314,9 @@ public class BplusNode {
         if(!b){
             right.entries.add(new SimpleEntry<Integer, String>(key, value));
         }
+
+        flushPage(left.entries,left);       /* 刷新左节点页面数据域 */
+        flushPage(right.entries,right);     /* 刷新右节点页面数据域 */
     }
 
     /** 插入节点后中间节点的更新 */
@@ -320,15 +347,19 @@ public class BplusNode {
             //分裂成左右两个节点
             BplusNode left = new BplusNode(pager,PageType.TABLE_INTERNAL);
             BplusNode right = new BplusNode(pager,PageType.TABLE_INTERNAL);
-            //左右两个节点子节点的长度
+
+            /* 计算left和right节点子节点的长度 */
             int leftSize = (tree.getOrder() + 1) / 2 + (tree.getOrder() + 1) % 2;
             int rightSize = (tree.getOrder() + 1) / 2;
-            //复制子节点到分裂出来的新节点，并更新关键字
-            for (int i = 0; i < leftSize - 1; i++) {
+
+            /* 复制记录信息和孩子指针给left和right节点 */
+            for (int i = 0; i < leftSize; i++) {
                 left.entries.add(entries.get(i));
+                left.children.add(children.get(i));
             }
-            for (int i = 0; i < rightSize - 1; i++) {
-                right.entries.add(entries.get(leftSize + i));
+            for (int i = 0; i < rightSize; i++) {
+                right.entries.add(entries.get(leftSize+i));
+                right.children.add(children.get(leftSize+i));
             }
 
             //如果不是根节点
@@ -344,16 +375,33 @@ public class BplusNode {
                 //父节点更新关键字
                 parent.updateInsert(tree);
                 parent = null;
-                //如果是根节点
+
             }else {
-                page.setPageType(PageType.TABLE_INTERNAL);
-                BplusNode parent = new BplusNode(pager, PageType.TABLE_ROOT);
-                tree.setRoot(parent);
+                /* 如果是根节点 */
                 tree.setHeight(tree.getHeight() + 1);
-                left.page.setpParent(parent.page.getPgno());
-                right.page.setpParent(parent.page.getPgno());
-                parent.entries.add(entries.get(leftSize - 1));
-                entries = null;
+                page.setPageType(PageType.TABLE_ROOT);
+
+                /* 调整left和right节点的parent指针 */
+                left.parent = this;
+                left.page.setpParent(page.getPgno());
+                right.parent = this;
+                right.page.setpParent(page.getPgno());
+
+                /* 将left和right节点添加至父节点的孩子指针 */
+                this.children.clear();
+                this.children.add(left);
+                this.children.add(right);
+
+                this.entries.clear();
+                this.entries.add(new SimpleEntry<Integer, String>(
+                        left.entries.get(0).getKey(),String.valueOf(left.page.getPgno())));
+                this.entries.add(new SimpleEntry<Integer, String>(
+                        right.entries.get(0).getKey(),String.valueOf(right.page.getPgno())));
+
+                /* 更新数据域 */
+                flushPage(this.entries,this);
+                flushPage(left.entries,left);
+                flushPage(right.entries,right);
             }
         }
     }
@@ -669,6 +717,23 @@ public class BplusNode {
         if(low>high){
             entries.add(low, new AbstractMap.SimpleEntry<Integer, String>(key, value));
         }
+        flushPage(entries,this);
+    }
+    /* 刷新页面数据域 */
+    protected void flushPage(List<Entry<Integer,String>> entries, BplusNode node){
+        if(node.page.getPageType() == PageType.TABLE_LEAF){
+            schema = getSchema();
+        }else{
+            schema = getSchema1();
+        }
+
+        List<Entry<Integer,byte[]>> dataList = new ArrayList<>();
+        for(int i=0; i<entries.size();i++)
+        {
+            dataList.add(new AbstractMap.SimpleEntry<Integer,byte[]>(entries.get(i).getKey(),
+                    schema.getBytes(entries.get(i).getKey(),entries.get(i).getValue())));
+        }
+        pager.writeData(node.page.getPgno(),dataList);
     }
 
     /** 删除节点*/
@@ -691,5 +756,42 @@ public class BplusNode {
     public String toString(){
         return page.toString();
 
+    }
+
+    public static TableSchema getSchema() {
+        TableSchema record = new TableSchema();
+        List<Column> cols = new ArrayList<Column>();
+        Column idCol =  new Column();
+        idCol.setName("id");
+        idCol.setType(DataType.INTEGER);
+        idCol.setConstraint(ColumnConstraint.NONE);
+
+        Column nameCol =  new Column();
+        nameCol.setName("name");
+        nameCol.setType(DataType.TEXT);
+        nameCol.setConstraint(ColumnConstraint.NONE);
+
+        Column ageCol =  new Column();
+        ageCol.setName("age");
+        ageCol.setType(DataType.TINY_INT);
+        ageCol.setConstraint(ColumnConstraint.NONE);
+
+        cols.add(idCol);
+        cols.add(nameCol);
+        cols.add(ageCol);
+        record.setColumns(cols);
+        return record;
+    }
+    public static TableSchema getSchema1() {
+        TableSchema record = new TableSchema();
+        List<Column> cols = new ArrayList<Column>();
+        Column idCol =  new Column();
+        idCol.setName("pgno");
+        idCol.setType(DataType.INTEGER);
+        idCol.setConstraint(ColumnConstraint.NONE);
+
+        cols.add(idCol);
+        record.setColumns(cols);
+        return record;
     }
 }
