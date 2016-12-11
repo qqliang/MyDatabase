@@ -3,7 +3,6 @@ package com.database.main;
 import com.database.global.ColumnConstraint;
 import com.database.global.DataType;
 import com.database.global.Database;
-import com.database.global.PageType;
 import com.database.pager.Column;
 import com.database.pager.Pager;
 import com.database.pager.TableSchema;
@@ -74,7 +73,6 @@ public class TestPager {
         entryList.add(map.entrySet().iterator().next());
 
         pager.writeData(2,entryList);
-        pager.writeData(2, entryList);
         pager.flush();
 
     }
@@ -124,7 +122,7 @@ public class TestPager {
         map.put(++rowid,schema.getBytes(rowid, "6,whw,22"));
         entryList.add(map.entrySet().iterator().next());
 
-        pager.writeData(1,entryList);
+        pager.writeData(2,entryList);
 
         List<Map.Entry<Integer, String>> list = pager.readRecord(1);
         System.out.println(list.toString());
@@ -135,7 +133,6 @@ public class TestPager {
      */
     public static void testReadByRowid(){
 
-//        pager.getPages()[1].setPageType(PageType.TABLE_LEAF);
         int rowid = 0;
         List<Map.Entry<Integer,byte[]>> entryList = new ArrayList<Map.Entry<Integer, byte[]>>();
         Map<Integer,byte[]> map = new HashMap<>();
@@ -162,9 +159,9 @@ public class TestPager {
         map.put(++rowid,schema.getBytes(rowid, "6,whw,22"));
         entryList.add(map.entrySet().iterator().next());
 
-        pager.writeData(1,entryList);
+        pager.writeData(2,entryList);
 
-        String row = pager.readDataByRowid(1,2).getValue();
+        String row = pager.readDataByRowid(2,2).getValue();
         System.out.println("row:"+row);
     }
 
