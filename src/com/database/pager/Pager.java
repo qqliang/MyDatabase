@@ -44,7 +44,7 @@ public class Pager {
 		Page page = pCache.fetch(pgno);
 		page.fillData(data);
 		pCache.makeDirty(page);
-		pCache.printStatus();
+//		pCache.printStatus();
 	}
 
 
