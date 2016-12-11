@@ -19,7 +19,7 @@ package com.database.myBplusTree;
  * 9.所有关键字都在叶子结点出现
  */
 import com.database.global.Database;
-import com.database.pager.Pager;
+import com.database.global.PageType;
 
 import java.util.List;
 
@@ -28,30 +28,30 @@ public class BplusTree{
     Database db ;               //数据库对象
 
     protected BplusNode root;   //根节点
-    protected int order;        //阶数，M值
-    protected BplusNode head;   //叶子节点的链表头
+    protected int order;        //树阶，M值
+    protected BplusNode head;   //头指针
     protected int height = 0;   //树高
 
-    private int rowID = 0;      //行号
+    private static int maxRowid = 0;      //最大行号
 
     /**
-     *构造函数
-     * 1、判断树阶是否大于等于3
-     * 2、创建根节点
-     * 3、树的head指针指向根节点
+     *??????
+     * 1??????????????????3
+     * 2???????????
+     * 3??????head??????????
      */
     public BplusTree(int order,Database db) {
         if (order < 3) {
-            System.out.print("order must be greater than 2");
+            System.out.print("树阶必须大于2！");
             System.exit(0);
         }
         this.order = order;
-        root = new BplusNode(db.getPager(),0);
+        root = new BplusNode(db.getPager(), PageType.TABLE_LEAF);
         head = root;
         this.db = db;
     }
 
-    /** 获取/设置叶子链表的头节点 */
+    /** 获取/设置头指针 */
     public BplusNode getHead() {
         return head;
     }
@@ -59,7 +59,7 @@ public class BplusTree{
         this.head = head;
     }
 
-    /** 获取/设置B+树的根节点 */
+    /** 获取/设置B+树根节点 */
     public BplusNode getRoot() {
         return root;
     }
@@ -83,6 +83,12 @@ public class BplusTree{
         return height;
     }
 
+    /* 获取rowid */
+    public static int getRowid(){
+        maxRowid++;
+        return maxRowid;
+    }
+
     public String get(Integer key) {
         return root.get(key);
     }
@@ -98,44 +104,44 @@ public class BplusTree{
 
 
     public String Remove(Integer key) {
-        System.out.print("开始删除!");
+        System.out.print("删除数据!");
         String result = remove(key);
         if (result == null) {
-            return "未找到对象";
+            return "未找到该数据";
         } else {
-            return "删除对象："+result;
+            return "删除数据为："+result;
         }
     }
 
     /**
-     * 通过rowid查找数据，则结果只有1个
+     * 根据rowid查询
      */
     public String SelectByKey(String value) {
         Integer key = Integer.parseUnsignedInt(value);
-        System.out.println("开始查询");
+        System.out.println("开始查询！");
         String result = get(key);
         if (result == null) {
-            return "未找到对象";
+            return "未找到数据";
         }else{
             return result;
         }
     }
 
     /**
-     * 通过其他字段查找数据，则返回的结果可能有多个
+     * 查询其他字段
      */
     public List<String> SelectByOther(String param, String value){
         List<String> results = null;
-        BplusNode tempNode = head.getNext();
+        BplusNode tempNode = new BplusNode(db.getPager(),db.getPager().loadPage(head.page.getpNext()));
         while(tempNode != null){
-            for(int i=0;i < tempNode.getEntries().size();i++){
-                String tempStr = tempNode.getEntries().get(i).getValue();
+            for(int i=0;i < tempNode.entries.size();i++){
+                String tempStr = tempNode.entries.get(i).getValue();
                 String tempValue[] = tempStr.split(",");
                 if(tempValue[1].equals(value)){
                     results.add(tempStr);
                 }
             }// end for
-            tempNode = tempNode.getNext();
+            tempNode = new BplusNode(db.getPager(),db.getPager().loadPage(head.page.getpNext()));
         }// end while
         return results;
     }
@@ -148,8 +154,7 @@ public class BplusTree{
      */
     public void Insert(String value) {
         System.out.println("开始插入!");
-        insertOrUpdate(rowID, value);
-        rowID++;
+        insertOrUpdate(BplusTree.getRowid(), value);
     }
 
 }
