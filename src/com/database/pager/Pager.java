@@ -41,7 +41,7 @@ public class Pager {
 	 * @param data	要写入的数据，entry中的byte[]可以通过Record的getBytes方法可以简单得到
 	 */
 	public void writeData(int pgno, List<Map.Entry<Integer, byte[]>> data){
-		Page page = pCache.fetch(pgno);
+		Page page = aquirePage(pgno);
 		page.fillData(data);
 		pCache.makeDirty(page);
 //		pCache.printStatus();
@@ -56,7 +56,7 @@ public class Pager {
 	public Page aquirePage(int pgno){
 		Page page = this.pCache.fetch(pgno);
 
-		if(page.getPgno() != 0)
+		if(page.getOffset() != SpaceAllocation.PAGE_SIZE)
 			return page;
 		page = loadPage(pgno, page);
 		return page;
@@ -71,9 +71,9 @@ public class Pager {
 		if(pgno <= 0 )
 			return null;
 		Map.Entry<Integer,String> entry = null;			//返回的结果
-		Page page = pCache.fetch(pgno);
+		Page page = aquirePage(pgno);
 		byte[] data = page.getData();
-		if(page.getPageType() == PageType.TABLE_LEAF){
+//		if(page.getPageType() == PageType.TABLE_LEAF){
 			int offset = page.getOffset();
 			int szHdr = Utils.loadIntFromBytes(data, offset+4);
 			int skip = szHdr;
@@ -111,9 +111,9 @@ public class Pager {
 				}
 			}
 			return entry;
-		}else{
-			return entry;
-		}
+//		}else{
+//			return entry;
+//		}
 	}
 	/**
 	 * 读取指定页面中的数据返回记录

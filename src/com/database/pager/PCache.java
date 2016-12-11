@@ -99,9 +99,9 @@ public class PCache{
         int key = getHashKey(pgno);
         ArrayList<Page> listInHash = ((ArrayList<Page>)this.apHash.get(key));
 
-        for(int i = 0; i < listInHash.size(); page = listInHash.get(i)){
+        for(int i = 0; i < listInHash.size(); i++){
             Page temp = listInHash.get(i);
-            if(temp != null && page.getPgno() == pgno){
+            if(temp != null && temp.getPgno() == pgno){
                 page = temp;
                 break;
             }
@@ -115,6 +115,9 @@ public class PCache{
         if(this.freePgs != null && this.freePgs.size() > 0){
             page = this.freePgs.remove(0);
             page.reset();
+            page.setPgno(pgno);
+            this.nCachedPage++;
+            ((ArrayList)this.apHash.get(getHashKey(pgno))).add(page);
             return page;
         }
 
@@ -122,8 +125,9 @@ public class PCache{
         if((this.nCachedPage+1) >= this.nMaxPage && lruList != null && lruList.size() > 0){
             page = lruList.remove(lruList.size()-1);
             removeFromHash(page);
+            page.reset();
             pin(page);
-            page.setPgno(0);
+            page.setPgno(pgno);
             return page;
         }
 
@@ -131,6 +135,7 @@ public class PCache{
         page = allocPage();
 
         if(page != null ){
+            page.setPgno(pgno);
             this.nCachedPage++;
             ((ArrayList)this.apHash.get(getHashKey(pgno))).add(page);
         }
