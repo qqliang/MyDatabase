@@ -33,12 +33,15 @@ public class TestPager {
 
     public static void main(String[] args){
         init();
-        testRead();
-//        testReadByRowid();
+//        testReadRecord();
+        testReadByRowid();
 //        testFlush();
 //        testLoad();
     }
-
+    public static void testReadRecord(){
+        List<Map.Entry<Integer, String>> entryList = pager.readRecord(2);
+        System.out.println(entryList);
+    }
     /**
      *  测试数据刷新到磁盘
      */
@@ -70,15 +73,8 @@ public class TestPager {
         map.put(++rowid,schema.getBytes(rowid, "6,whw,22"));
         entryList.add(map.entrySet().iterator().next());
 
-        pager.writeData(1,entryList);
-        pager.writeData(1, entryList);
-//        pager.writeData(1, schema.getBytes(++rowid, "1,zhouyu,22"));
-//        pager.writeData(1, schema.getBytes(++rowid,"2,lqq,22"));
-//        pager.writeData(1, schema.getBytes(++rowid,"3,hh,26"));
-//
-//        pager.writeData(1, schema.getBytes(++rowid,"4,dxr,27"));
-//        pager.writeData(1, schema.getBytes(++rowid,"5,yyc,27"));
-//        pager.writeData(1, schema.getBytes(++rowid,"6,whw,22"));
+        pager.writeData(2,entryList);
+        pager.writeData(2, entryList);
         pager.flush();
 
     }
@@ -91,7 +87,6 @@ public class TestPager {
         Database database = new Database();
         database.openDB("test2");
         Pager pager = new Pager(database);
-        pager.loadDB();
 
         List<Map.Entry<Integer, String>> list = pager.readRecord(1);
         System.out.println(list);
@@ -140,7 +135,7 @@ public class TestPager {
      */
     public static void testReadByRowid(){
 
-        pager.getPages()[1].setPageType(PageType.TABLE_LEAF);
+//        pager.getPages()[1].setPageType(PageType.TABLE_LEAF);
         int rowid = 0;
         List<Map.Entry<Integer,byte[]>> entryList = new ArrayList<Map.Entry<Integer, byte[]>>();
         Map<Integer,byte[]> map = new HashMap<>();
@@ -168,6 +163,7 @@ public class TestPager {
         entryList.add(map.entrySet().iterator().next());
 
         pager.writeData(1,entryList);
+
         String row = pager.readDataByRowid(1,2).getValue();
         System.out.println("row:"+row);
     }

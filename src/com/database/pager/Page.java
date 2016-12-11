@@ -44,6 +44,9 @@ public class Page {
     private int headerSize;
 
     public Page(){
+        init();
+    }
+    private void init(){
         this.size = SpaceAllocation.PAGE_SIZE;
         this.data = new byte[this.size];
         this.sectorSize = SpaceAllocation.SECTOR_SIZE;
@@ -52,7 +55,6 @@ public class Page {
 
         setCells(null);
         setPageType((byte)0);
-        setpChild(0);
         setPgno(0);
         setOffset(this.size);
     }
@@ -94,6 +96,13 @@ public class Page {
         return pPrev;
     }
 
+    /**
+     * 重置页面内容，全部填充为0，再重新初始化内容
+     */
+    public void reset(){
+        Arrays.fill(this.data, (byte)0);
+        init();
+    }
     public void setpPrev(int pPrev) {
         if(this.pgno == 1){
             /**
@@ -122,26 +131,10 @@ public class Page {
         }
     }
 
-    public void updateData(){
-        toString();
-        Utils.fillInt(this.pgno, this.data, Position.PGNO_IN_PAGE);
-        this.data[Position.PGTYPE_IN_PAGE] = this.pageType;
-        Utils.fillInt(this.offset,this.data,Position.OFFSET_IN_PAGE);
-        Utils.fillInt(this.overflowPgno,this.data,Position.OVERFLOWPGNO_IN_PAGE);
-        Utils.fillInt(this.pParent,this.data,Position.PARENT_PAGE_IN_PAGE);
-        Utils.fillInt(this.pPrev,this.data,Position.PREV_PAGE_IN_PAGE);
-        Utils.fillInt(this.pNext,this.data,Position.NEXT_PAGE_IN_PAGE);
-        this.data[Position.CELLNUM_IN_PAGE] = this.nCell;
-        setCells(this.cells);
-
-        this.data[Position.CELLNUM_IN_PAGE] = this.nCell;
-    }
-
     @Override
     public String toString() {
         return "Page{" +
                 "order=" + order +
-                ", maxRowID=" + maxRowID +
                 ", pgno=" + pgno +
                 ", pageType=" + pageType +
                 ", offset=" + offset +
@@ -152,9 +145,6 @@ public class Page {
                 ", nCell=" + nCell +
                 ", cells=" + cells +
                 ", size=" + size +
-                ", data=" + Arrays.toString(data) +
-                ", sectorSize=" + sectorSize +
-                ", reserved=" + reserved +
                 ", headerSize=" + headerSize +
                 '}';
     }
@@ -169,10 +159,6 @@ public class Page {
         this.pageType =  this.data[Position.PGTYPE_IN_PAGE];
     }
 
-
-    public void setpChild(int pChild) {
-
-    }
 
     public byte getOrder() {
         return order;
@@ -264,6 +250,11 @@ public class Page {
         }
 
     }
+
+    /**
+     *
+     * @param entryList
+     */
     public void fillData(List<Map.Entry<Integer, byte[]>> entryList){
         if(entryList == null || entryList.size() == 0)
             return ;

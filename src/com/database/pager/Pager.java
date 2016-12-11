@@ -6,11 +6,11 @@ import com.database.global.*;
 
 
 public class Pager {
-	Database database;
-	File journal;
-	PCache pCache;
-	Page[] pages;
-	int pageNum;
+	private Database database;
+	private File journal;
+	private PCache pCache;
+//	private Page[] pages;
+//	private int pageNum;
 
 	private List<Page> freeList;
 	private int mxPgno;
@@ -18,41 +18,9 @@ public class Pager {
 	public Pager(Database database) {
 		this.database = database;
 //		this.journal = new File(this.database.getDBName()+"-journal");
-		this.pCache = null;
-		this.pageNum = 1000;
-		initPages();
-		this.freeList = Arrays.asList(this.pages);
+		this.pCache = new PCache();
 	}
 
-	public Page[] getPages() {
-		return pages;
-	}
-
-	public void setPages(Page[] pages) {
-		this.pages = pages;
-	}
-
-	public int getPageNum() {
-		return pageNum;
-	}
-
-	public void setPageNum(int pageNum) {
-		this.pageNum = pageNum;
-	}
-
-	public void initPages(){
-		this.pages = new Page[this.pageNum];
-		for(int i =0 ;i <this.pages.length; i++){
-			Page page = new Page();
-			page.setData(new byte[SpaceAllocation.PAGE_SIZE]);
-			page.setPgno(i);
-			page.setOverflowPgno(0);
-			page.setSectorSize(SpaceAllocation.SECTOR_SIZE);
-			page.setSize(SpaceAllocation.PAGE_SIZE);
-			page.setOffset(SpaceAllocation.PAGE_SIZE);
-			pages[i] = page;
-		}
-	}
 	public void writeRootPage(Page page){
 		File dbFile = new File(database.getDBFile());
 		byte[] rootPageData = new byte[SpaceAllocation.PAGE_SIZE];
@@ -73,29 +41,25 @@ public class Pager {
 	 * @param data	要写入的数据，entry中的byte[]可以通过Record的getBytes方法可以简单得到
 	 */
 	public void writeData(int pgno, List<Map.Entry<Integer, byte[]>> data){
-		Page page = this.pages[pgno];
+		Page page = pCache.fetch(pgno);
 		page.fillData(data);
+		pCache.makeDirty(page);
+		pCache.printStatus();
 	}
 
-	/**
-	 * 像指定页面中追加数据(会有错误！)
-	 * @param pgno 要写入数据的页号
-	 * @param data	要写入的数据，可以通过Record的getBytes方法可以简单得到
-	 */
-	public void appendData(int pgno, byte[] data){
-		Page page = this.pages[pgno];
-		page.appendData(data);
-	}
-	/**
-	 * 读取指定页面中的数据
-	 * @param pgno 要写入数据的页号
-	 * @return 指定页面的数据
-	 */
-	public byte[] readData(int pgno){
-		if(pgno <= 0 )
-			return null;
 
-		return this.pages[pgno].getData();
+	/**
+	 * 读取指定页号对应的页面
+	 * @param pgno	要获取的页面的页号
+	 * @return
+	 */
+	public Page aquirePage(int pgno){
+		Page page = this.pCache.fetch(pgno);
+
+		if(page.getPgno() != 0)
+			return page;
+		page = loadPage(pgno, page);
+		return page;
 	}
 	/**
 	 * 读取指定页面中的数据
@@ -107,7 +71,7 @@ public class Pager {
 		if(pgno <= 0 )
 			return null;
 		Map.Entry<Integer,String> entry = null;			//返回的结果
-		Page page = this.pages[pgno];
+		Page page = pCache.fetch(pgno);
 		byte[] data = page.getData();
 		if(page.getPageType() == PageType.TABLE_LEAF){
 			int offset = page.getOffset();
@@ -160,7 +124,7 @@ public class Pager {
 		if(pgno <= 0 )
 			return null;
 		List<String> result = new ArrayList<String>();
-		Page page = this.pages[pgno];
+		Page page  = aquirePage(pgno);
 		int offset = page.getOffset();
 		if(offset == page.getSize() || offset <= SpaceAllocation.PAGE_HEADER_SIZE)
 			return null;
@@ -204,7 +168,7 @@ public class Pager {
 		return list;
 	}
 
-	public String colsToRow(List<String> cols){
+	private String colsToRow(List<String> cols){
 		StringBuilder row = new StringBuilder();
 		for(String col : cols){
 			row.append(col+",");
@@ -212,14 +176,14 @@ public class Pager {
 		return row.substring(0,row.length()-1);
 	}
 	/**
-	 *
-	 * @param data		数据加载的地方
-	 * @param types
+	 * 从指定字节数组中加载一条entry（格式：rowid，行记录String）
+	 * @param data		读取的来源
+	 * @param types		类型数组
 	 * @param hdrSz
 	 * @param start		加载起始位置
 	 * @return 一条记录对应的Entry
 	 */
-	public Map.Entry<Integer, String> loadEntryFromBytes(byte[] data, int hdrSz, int[] types, int start){
+	private Map.Entry<Integer, String> loadEntryFromBytes(byte[] data, int hdrSz, int[] types, int start){
 		Map<Integer, String> entry = new HashMap<Integer, String>();
 		List<String> cols = new ArrayList<String>();
 		int colNum = types.length;
@@ -261,14 +225,14 @@ public class Pager {
 		RandomAccessFile raf = null;
 		try{
 			raf = new RandomAccessFile(this.database.getDBFile(),"rw");
-			raf.seek(0);
-			for(int i =0; i<this.pageNum;i++)
+			for(int i = 1; i < pCache.getDirtyPgs().size(); i++)
 			{
-				Page page = this.pages[i];
-//				page.updateData();
-				raf.write(page.getData());
+				List<Page> dirtyPgs = pCache.getDirtyPgs();
+				for(Page page : dirtyPgs){
+					raf.seek((page.getPgno()-1)*SpaceAllocation.PAGE_SIZE);
+					raf.write(page.getData());
+				}
 			}
-
 		}catch (IOException e){
 			e.printStackTrace();
 		}finally {
@@ -282,35 +246,24 @@ public class Pager {
 	}
 
 	/**
-	 *
+	 *	根据页号，将数据加载到一个Page
 	 * @param pgno 页号
 	 * @return
 	 */
-	public Page loadPage(int pgno){
+	private Page loadPage(int pgno, Page newPage){
 		if(pgno <= 0)
 			return null;
-		if(Utils.loadIntFromBytes(this.getPages()[pgno].getData(), Position.PGNO_IN_PAGE) != 0 )
-			return this.pages[pgno];
 
 		RandomAccessFile raf = null;
-		Page newPage = null;
+
 		try{
-			raf = new RandomAccessFile(this.database.getDBFile(),"r");
+			raf = new RandomAccessFile(this.database.getDBFile(),"rw");
 			raf.seek((pgno-1) * SpaceAllocation.PAGE_SIZE);
 
 			byte[] data = new byte[SpaceAllocation.PAGE_SIZE];
 			raf.read(data, 0 , SpaceAllocation.PAGE_SIZE);
-
-			newPage = freeList.get(pgno);
-			newPage.setSize(SpaceAllocation.PAGE_SIZE);
-			newPage.setSectorSize(SpaceAllocation.SECTOR_SIZE);
-			newPage.setData(data);
-			newPage.setOffset(Utils.loadShortFromBytes(data, Position.OFFSET_IN_PAGE));
-			newPage.setOverflowPgno(Utils.loadIntFromBytes(data, Position.OVERFLOWPGNO_IN_PAGE));
-			newPage.setPgno(Utils.loadIntFromBytes(data, Position.PGNO_IN_PAGE));
-
-			this.pages[pgno] = newPage;
-			freeList.remove(pgno);
+			newPage.copyData(data);
+			populatePageObj(newPage);
 			return newPage;
 		}catch (IOException e){
 			e.printStackTrace();
@@ -324,85 +277,50 @@ public class Pager {
 		return newPage;
 	}
 
-
 	/**
-	 *	加载数据库文件中的数据。
+	 * 根据page对象中的数据域（有效）对page对象进行初始化
+	 * @param page
 	 */
-	public void loadDB() {
-		String dbPath = this.database.getDBFile();
-		if(this.database == null || this.database.getDBFile()== null || this.database.getDBFile().isEmpty())
-			return;
-		FileInputStream fis = null;
-		try{
-			fis = new FileInputStream(new File(dbPath));
-			byte[] data = new byte[SpaceAllocation.PAGE_SIZE];
-			int len = 0;
-			int pgno = 0;
-
-			/**
-			 *	开始读取数据库：
-			 * 第一次读取的根页面，后续为数据页面
-			 */
-			while((len = fis.read(data,0,data.length)) > 0 ){
-				Page page = null;
-				if(pgno < this.pageNum) {
-					page = this.pages[pgno];
-					page.copyData(data);
-				}
-				else{
-					resizePages();
-					page = this.pages[pgno];
-					page.copyData(data);
-				}
-				page.setPgno(Utils.loadIntFromBytes(page.getData(), Position.PGNO_IN_PAGE));
-				page.setPageType(page.getData()[Position.PGTYPE_IN_PAGE]);
-				page.setOffset(Utils.loadIntFromBytes(page.getData(), Position.OFFSET_IN_PAGE));
-				page.setOverflowPgno(Utils.loadIntFromBytes(page.getData(), Position.OVERFLOWPGNO_IN_PAGE));
-				page.setpParent(Utils.loadIntFromBytes(page.getData(), Position.PARENT_PAGE_IN_PAGE));
-				page.setpPrev(Utils.loadIntFromBytes(page.getData(), Position.PREV_PAGE_IN_PAGE));
-				page.setpNext(Utils.loadIntFromBytes(page.getData(), Position.NEXT_PAGE_IN_PAGE));
-				byte nCell = page.getData()[Position.CELLNUM_IN_PAGE];
-				List<Integer> cells = new ArrayList<>();
-				for(int i = 0 ; i<nCell; i++){
-					page.addCell(Utils.loadIntFromBytes(page.getData(), Position.CELL_IN_PAGE + (i*4) ));
-				}
-				pgno++;
-			}
-		}catch (IOException e){
-			e.printStackTrace();
-		}finally {
-			try{
-				if(fis != null) fis.close();
-			}catch (IOException e){
-				e.printStackTrace();
-			}
+	private void populatePageObj(Page page){
+		page.setPgno(Utils.loadIntFromBytes(page.getData(), Position.PGNO_IN_PAGE));
+		page.setPageType(page.getData()[Position.PGTYPE_IN_PAGE]);
+		page.setOffset(Utils.loadIntFromBytes(page.getData(), Position.OFFSET_IN_PAGE));
+		page.setOverflowPgno(Utils.loadIntFromBytes(page.getData(), Position.OVERFLOWPGNO_IN_PAGE));
+		page.setpParent(Utils.loadIntFromBytes(page.getData(), Position.PARENT_PAGE_IN_PAGE));
+		page.setpPrev(Utils.loadIntFromBytes(page.getData(), Position.PREV_PAGE_IN_PAGE));
+		page.setpNext(Utils.loadIntFromBytes(page.getData(), Position.NEXT_PAGE_IN_PAGE));
+		byte nCell = page.getData()[Position.CELLNUM_IN_PAGE];
+		List<Integer> cells = new ArrayList<>();
+		for(int i = 0 ; i<nCell; i++){
+			page.addCell(Utils.loadIntFromBytes(page.getData(), Position.CELL_IN_PAGE + (i*4) ));
 		}
 	}
 	public Page newPage(){
-		Page newPage = freeList.remove(1);
+		Page newPage = freeList.get(1);
 		freeList.remove(1);
 		return newPage;
 	}
 	public void freePage(int pgno){
+		pCache.free(pgno);
 	}
-	private void resizePages()
-	{
-		int oldPageNum = this.pageNum;
-		Page[] newPages = new Page[oldPageNum * 2];
-		for(int i = 0; i< oldPageNum; i++){
-			newPages[i] = this.pages[i];
-		}
-		for(int i = oldPageNum; i < newPages.length; i++){
-			Page page = new Page();
-			page.setData(new byte[SpaceAllocation.PAGE_SIZE]);
-			page.setPgno(i);
-			page.setSectorSize(SpaceAllocation.SECTOR_SIZE);
-			page.setSize(SpaceAllocation.PAGE_SIZE);
-			page.setOffset(SpaceAllocation.PAGE_SIZE);
-			newPages[i] = page;
-		}
-
-		this.pages = newPages;
-		this.pageNum = newPages.length;
-	}
+//	private void resizePages()
+//	{
+//		int oldPageNum = this.pageNum;
+//		Page[] newPages = new Page[oldPageNum * 2];
+//		for(int i = 0; i< oldPageNum; i++){
+//			newPages[i] = this.pages[i];
+//		}
+//		for(int i = oldPageNum; i < newPages.length; i++){
+//			Page page = new Page();
+//			page.setData(new byte[SpaceAllocation.PAGE_SIZE]);
+//			page.setPgno(i);
+//			page.setSectorSize(SpaceAllocation.SECTOR_SIZE);
+//			page.setSize(SpaceAllocation.PAGE_SIZE);
+//			page.setOffset(SpaceAllocation.PAGE_SIZE);
+//			newPages[i] = page;
+//		}
+//
+//		this.pages = newPages;
+//		this.pageNum = newPages.length;
+//	}
 }
