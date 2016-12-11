@@ -4,6 +4,7 @@ package com.database.pager;
  * Created by zoe on 2016/12/2.
  */
 
+import com.database.global.PageType;
 import com.database.global.SpaceAllocation;
 import com.database.global.Utils;
 
@@ -52,7 +53,7 @@ public class Page {
         this.sectorSize = SpaceAllocation.SECTOR_SIZE;
         this.reserved = SpaceAllocation.PAGE_RESERVED;
         this.headerSize = SpaceAllocation.PAGE_HEADER_SIZE;
-
+        this.pageType = PageType.TABLE_LEAF;
         setCells(null);
         setPageType((byte)0);
         setPgno(0);
@@ -272,8 +273,6 @@ public class Page {
                 /**
                  * 添加溢出页面
                  */
-            }else{
-                this.data = Utils.fillBytes(data, this.data, offset);
             }
         }
         setCells(rowidList);
