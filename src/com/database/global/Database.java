@@ -80,7 +80,6 @@ public class Database {
 			return 0;//打开不成功
 		}else{
 			setStat(1);
-			this.dbSize = (int)dbFile.getTotalSpace()/SpaceAllocation.PAGE_SIZE;
 			return 1;//打开成功
 		}
 	}
@@ -99,6 +98,10 @@ public class Database {
 	}
 	/** 设置和获取数据库大小 */
 	public int getDbSize() {
+		File dbFile = new File(this.getDBFile());
+		if(dbFile.exists() && dbFile.isFile()){
+			this.dbSize = (int)dbFile.getTotalSpace()/SpaceAllocation.PAGE_SIZE;
+		}
 		return this.dbSize;
 	}
 	public void setDbSize(int dbSize) {
