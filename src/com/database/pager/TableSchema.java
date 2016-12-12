@@ -169,4 +169,52 @@ public class TableSchema {
         }
         return data;
     }
+    public static TableSchema getTableSchema() {
+        TableSchema record = new TableSchema();
+        List<Column> cols = new ArrayList<Column>();
+        Column idCol =  new Column();
+        idCol.setName("id");
+        idCol.setType(DataType.INTEGER);
+        idCol.setConstraint(ColumnConstraint.NONE);
+
+        Column nameCol =  new Column();
+        nameCol.setName("name");
+        nameCol.setType(DataType.TEXT);
+        nameCol.setConstraint(ColumnConstraint.NONE);
+
+        Column ageCol =  new Column();
+        ageCol.setName("age");
+        ageCol.setType(DataType.TINY_INT);
+        ageCol.setConstraint(ColumnConstraint.NONE);
+
+        cols.add(idCol);
+        cols.add(nameCol);
+        cols.add(ageCol);
+        record.setColumns(cols);
+        return record;
+    }
+    public static TableSchema getInternalSchema() {
+        TableSchema record = new TableSchema();
+        List<Column> cols = new ArrayList<Column>();
+        Column idCol =  new Column();
+        idCol.setName("pgno");
+        idCol.setType(DataType.INTEGER);
+        idCol.setConstraint(ColumnConstraint.NONE);
+
+        cols.add(idCol);
+        record.setColumns(cols);
+        return record;
+    }
+    public static TableSchema getTreeSchema() {
+        TableSchema record = new TableSchema();
+        List<Column> cols = new ArrayList<Column>();
+        Column idCol =  new Column();
+        idCol.setName("tableName");
+        idCol.setType(DataType.TEXT);
+        idCol.setConstraint(ColumnConstraint.NONE);
+
+        cols.add(idCol);
+        record.setColumns(cols);
+        return record;
+    }
 }
