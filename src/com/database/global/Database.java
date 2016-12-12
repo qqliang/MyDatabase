@@ -1,16 +1,19 @@
 package com.database.global;
 
+import com.database.myBplusTree.BplusNode;
 import com.database.myBplusTree.BplusTree;
+import com.database.pager.Page;
 import com.database.pager.Pager;
 import com.database.pager.Table;
+import com.database.pager.TableSchema;
+import com.database.parse.CRUD;
 import com.database.parse.parser;
 import com.database.queryExecute.Execute;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Map.Entry;
 
 public class Database {
 
@@ -19,8 +22,10 @@ public class Database {
 	private File dbFile;								//数据库文件
 	private int stat; 									//数据库状态，打开为1，关闭为0
 	private Pager pager; 								//pager对象
+	private int dbSize;									//数据库大小
 
 	private Map<String,BplusTree> tableTreeMap;			//表与B+树映射列表
+	private int tableCount;								//数据库中表的个数
 
 	//构造函数
 	public Database(){
@@ -59,9 +64,31 @@ public class Database {
 		this.pager = pager;
 	}
 
+	/** 设置和获取数据库名字 */
+	public int getDbSize() {
+		File file = new File(getDBFile());
+		if(file.exists() && file.isFile()){
+			this.dbSize = (int)file.getTotalSpace()%SpaceAllocation.PAGE_SIZE;
+		}
+		return dbSize;
+	}
+	public void setDbSize(int dbSize) {
+		this.dbSize = dbSize;
+	}
+
 	/** 向表树映射中添加映射关系 */
 	public void addTableTree(String tableName, BplusTree tree){
 		tableTreeMap.put(tableName, tree);
+
+		List<Entry<Integer,byte[]>> entryList = new ArrayList<>();
+		TableSchema schema = TableSchema.getTreeSchema();
+
+		//向page1中添加映射关系
+		for(int i=0;i<tableTreeMap.size();i++){
+			entryList.add(new SimpleEntry<Integer, byte[]>(
+					tree.getRoot().page.getPgno(),schema.getBytes(tableCount,tableName)));
+		}
+		pager.writeData(1,entryList);
 	}
 	/** 根据表名获取B+树 */
 	public BplusTree getTableTreeByName (String tableName){
@@ -78,20 +105,42 @@ public class Database {
 		if (!dbFile.exists()) {
 			return 0;//打开不成功
 		}else{
+			this.dbSize = (int)(dbFile.getTotalSpace()%SpaceAllocation.PAGE_SIZE);
+			this.pager.setMxPgno(this.dbSize <= 0 ? 1: this.dbSize);
+			this.dbName = dbName;
 			setStat(1);
+
+			/* 获取page1中的表和树的映射关系 */
+			Page page1 = pager.aquirePage(1);
+			List<Entry<Integer,String>> entryList = pager.readRecord(1);
+			if(entryList != null)
+			{
+				for(int i=0;i<entryList.size();i++){
+					Page page = pager.aquirePage(entryList.get(i).getKey());
+					BplusNode root = new BplusNode(pager,page);
+					BplusNode head = new BplusNode(pager,pager.aquirePage(page1.getHead()));
+					BplusTree tree = new BplusTree(page1.getOrder(),this,root,head);
+					tableTreeMap.put(entryList.get(i).getValue(),tree);
+				}
+			}
+
+			/* 获取表计数 */
+			this.tableCount = page1.getTableCount();
 			return 1;//打开成功
 		}
 	}
+
+
 
 	/**
 	 * sql语句的执行
 	 * @param sql
 	 */
 	public void exeSQL(String sql){
-		String result[] = parser.parser(sql);
-		if(result[0] != "0" )
+		String result[] = CRUD.parser(sql);
+		if(result[0] != null )
 		{
-			Execute execute = new Execute(this);
+			Execute execute = new Execute(this,pager);
 			execute.queryDo(result);
 		}
 	}

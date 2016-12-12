@@ -18,9 +18,8 @@ import java.util.Map;
  * 页面对象
  */
 public class Page {
-    //根页面头
-    private byte order;
-    private int maxRowID;
+    //page 1 头
+    private  int tableCount;
 
     //普通页面头
     private int pgno;                                   //页号
@@ -32,6 +31,10 @@ public class Page {
     private int overflowPgno;                           //溢出页号
     private byte nCell;                                 //当前页面中cell的数量
     private List<Integer> cells;                        //Cell中：rowid
+    //B+树根页头
+    private int head ;                                  //
+    private byte order;                                 //
+    private int maxRowID;                               //
 
     //其他
     private int size;
@@ -71,7 +74,11 @@ public class Page {
     }
 
     public void setMaxRowID(int maxRowID) {
+        if(this.pgno ==1 )
+            return;
+
         this.maxRowID = maxRowID;
+        Utils.fillInt(this.maxRowID,this.data,Position.MAX_ROWID_IN_BPLIS_ROOT);
     }
 
     public int getpParent() {
@@ -90,6 +97,40 @@ public class Page {
         if(this.pParent > 1){
             this.pParent = pParent;
             Utils.fillInt(this.pParent,this.data,Position.PARENT_PAGE_IN_PAGE);
+        }
+    }
+
+    public int getTableCount() {
+        return tableCount;
+    }
+
+    public void setTableCount(int tableCount) {
+        if(this.pgno != 1)
+            return ;
+
+        this.tableCount = tableCount;
+        Utils.fillInt(this.tableCount,this.data,Position.TABLE_COUNT_IN_FIRST_PAGE);
+    }
+
+    public int getHead() {
+        return head;
+    }
+
+    public void setHead(int head) {
+        if(this.pgno == 1)
+            return ;
+
+        if(head < 2)
+            return ;
+
+        if(this.head == 1){
+            /**
+             * 有待补充
+             */
+        }
+        if(this.head > 1){
+            this.head = head;
+            Utils.fillInt(this.head,this.data,Position.HEAD_IN_BPLUS_ROOT);
         }
     }
 
@@ -170,7 +211,8 @@ public class Page {
      * @param order
      */
     public void setOrder(byte order) {
-        this.order = order;
+        this.data[Position.ORDER_IN_BPLUS_ROOT] = order;
+        this.order =  this.data[Position.PGTYPE_IN_PAGE];
     }
 
     public byte getnCell() {
@@ -267,6 +309,7 @@ public class Page {
             entry = entryList.get(i);
             rowidList.add(entry.getKey());
             byte[] data = entry.getValue();
+            Utils.fillBytes(data, this.data, offset - entry.getValue().length);
             usable -= entry.getValue().length;
             offset -= entry.getValue().length;
             if(usable < 0){

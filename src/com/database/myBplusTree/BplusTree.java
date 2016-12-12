@@ -35,12 +35,13 @@ public class BplusTree{
     private static int maxRowid = 0;      //最大行号
 
     /**
-     *??????
-     * 1??????????????????3
-     * 2???????????
-     * 3??????head??????????
+     *构造函数
+     * 1、判断树阶是否大于等于3
+     * 2、创建根节点
+     * 3、树的head指针指向根节点
      */
     public BplusTree(int order,Database db) {
+        /* 创建一个新的B+树 */
         if (order < 3) {
             System.out.print("树阶必须大于2！");
             System.exit(0);
@@ -48,6 +49,17 @@ public class BplusTree{
         this.order = order;
         root = new BplusNode(db.getPager(), PageType.TABLE_LEAF);
         head = root;
+        this.db = db;
+    }
+    public BplusTree(int order,Database db,BplusNode root,BplusNode head) {
+        /* 从根节点中读取B+树，并构建 */
+        if (order < 3) {
+            System.out.print("树阶必须大于2！");
+            System.exit(0);
+        }
+        this.order = order;
+        this.root = root;
+        this.head = head;
         this.db = db;
     }
 
@@ -132,7 +144,7 @@ public class BplusTree{
      */
     public List<String> SelectByOther(String param, String value){
         List<String> results = null;
-        BplusNode tempNode = new BplusNode(db.getPager(),db.getPager().loadPage(head.page.getpNext()));
+        BplusNode tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()));
         while(tempNode != null){
             for(int i=0;i < tempNode.entries.size();i++){
                 String tempStr = tempNode.entries.get(i).getValue();
@@ -141,7 +153,7 @@ public class BplusTree{
                     results.add(tempStr);
                 }
             }// end for
-            tempNode = new BplusNode(db.getPager(),db.getPager().loadPage(head.page.getpNext()));
+            tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()));
         }// end while
         return results;
     }
