@@ -4,15 +4,18 @@ import java.util.List;
 
 import com.database.global.*;
 import com.database.myBplusTree.BplusTree;
+import com.database.pager.Page;
 import com.database.pager.Pager;
 
 public class Execute {
 	private static String path = "D:/db";//根目录
 	private Database db;
+	private Pager pager;
 
 	//构造函数
-	public Execute (Database db){
+	public Execute (Database db,Pager pager){
 		this.db = db;
+		this.pager = pager;
 	}
 
 	//查询执行
@@ -40,12 +43,18 @@ public class Execute {
 				File file = new File(path + "/" +param[1]);
 				if (!file.exists()) {
                     file.createNewFile();
-					//调用pager对象创建page1
-					Pager pager = db.getPager();
+					db.setDBFile(file);
+					/* 调用pager对象创建page1 */
+					Page page1 = pager.aquirePage(1);
+					page1.setOrder((byte)3);		//设置树阶为3
+					page1.setMaxRowID(0);			//设置目前最大rowid为0
+					page1.setTableCount(0);			//设置目前表的计数为0
+					pager.updateHeader(page1);
+					pager.flush();
 					//打开该数据库
 					if(db.getStat() == 0){
-						db.setDBName(param[1]);
-						db.setStat(1);
+						db.setDBName(param[1]);		//设置数据库名称
+						db.setStat(1);				//设置数据库状态
 					}
 					System.out.println("数据库创建成功！");
 				}else{
@@ -65,7 +74,8 @@ public class Execute {
 			if(db.getStat() != 1){
 				System.out.println("未打开数据库，请先打开数据库!");
 			}else{
-				BplusTree tree = new BplusTree(3,db);
+				Page page1 = pager.aquirePage(1);
+				BplusTree tree = new BplusTree(page1.getOrder(),db);
 				db.addTableTree(param[1], tree);
 			}
 			break;
