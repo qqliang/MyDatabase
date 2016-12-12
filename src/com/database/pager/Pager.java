@@ -12,13 +12,38 @@ public class Pager {
 //	private Page[] pages;
 //	private int pageNum;
 
-	private List<Page> freeList;
 	private int mxPgno;
+	private int head;
+	private int tableCount;
 
 	public Pager(Database database) {
 		this.database = database;
 //		this.journal = new File(this.database.getDBName()+"-journal");
 		this.pCache = new PCache();
+	}
+
+	public int getMxPgno() {
+		return mxPgno;
+	}
+
+	public void setMxPgno(int mxPgno) {
+		this.mxPgno = mxPgno;
+	}
+
+	public int getHead() {
+		return head;
+	}
+
+	public void setHead(int head) {
+		this.head = head;
+	}
+
+	public int getTableCount() {
+		return tableCount;
+	}
+
+	public void setTableCount(int tableCount) {
+		this.tableCount = tableCount;
 	}
 
 	public void writeRootPage(Page page){
@@ -175,6 +200,10 @@ public class Pager {
 		}
 		return row.substring(0,row.length()-1);
 	}
+
+	public void updateHeader(Page page){
+		pCache.makeDirty(page);
+	}
 	/**
 	 * 从指定字节数组中加载一条entry（格式：rowid，行记录String）
 	 * @param data		读取的来源
@@ -295,11 +324,11 @@ public class Pager {
 			page.addCell(Utils.loadIntFromBytes(page.getData(), Position.CELL_IN_PAGE + (i*4) ));
 		}
 	}
-	public Page newPage(){
-		Page newPage = freeList.get(1);
-		freeList.remove(1);
-		return newPage;
-	}
+//	public Page newPage(){
+//		Page page = aquirePage(this.getMxPgno()+1);
+//		setMxPgno(getMxPgno()+1);
+//		return page;
+//	}
 	public void freePage(int pgno){
 		pCache.free(pgno);
 	}
