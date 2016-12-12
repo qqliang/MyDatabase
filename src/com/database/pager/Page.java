@@ -18,9 +18,8 @@ import java.util.Map;
  * 页面对象
  */
 public class Page {
-    //根页面头
-    private byte order;
-    private int maxRowID;
+    //page 1 头
+    private  int tableCount;
 
     //普通页面头
     private int pgno;                                   //页号
@@ -32,6 +31,10 @@ public class Page {
     private int overflowPgno;                           //溢出页号
     private byte nCell;                                 //当前页面中cell的数量
     private List<Integer> cells;                        //Cell中：rowid
+    //B+树根页头
+    private int head ;                                  //
+    private byte order;                                 //
+    private int maxRowID;                               //
 
     //其他
     private int size;
@@ -91,6 +94,22 @@ public class Page {
             this.pParent = pParent;
             Utils.fillInt(this.pParent,this.data,Position.PARENT_PAGE_IN_PAGE);
         }
+    }
+
+    public int getTableCount() {
+        return tableCount;
+    }
+
+    public void setTableCount(int tableCount) {
+        this.tableCount = tableCount;
+    }
+
+    public int getHead() {
+        return head;
+    }
+
+    public void setHead(int head) {
+        this.head = head;
     }
 
     public int getpPrev() {
