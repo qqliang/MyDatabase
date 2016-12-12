@@ -87,7 +87,7 @@ public class Database {
 				tree.getRoot().page.getPgno(),schema.getBytes(tableCount,tableName+","+tableParam));
 
 		/* 向page1中追加映射关系：B+树根页号 -> 表名，表约束 */
-//		pager.appendData(1,entry);
+		pager.appendData(pager.aquirePage(1),entry);
 		pager.flush();
 		tableCount++;
 	}
