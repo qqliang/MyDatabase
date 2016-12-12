@@ -309,6 +309,7 @@ public class Page {
             entry = entryList.get(i);
             rowidList.add(entry.getKey());
             byte[] data = entry.getValue();
+            Utils.fillBytes(data, this.data, offset - entry.getValue().length);
             usable -= entry.getValue().length;
             offset -= entry.getValue().length;
             if(usable < 0){

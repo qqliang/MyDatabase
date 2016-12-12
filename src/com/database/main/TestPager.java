@@ -6,11 +6,12 @@ import com.database.global.Database;
 import com.database.pager.Column;
 import com.database.pager.Pager;
 import com.database.pager.TableSchema;
-
+import com.database.myBplusTree.BplusTree;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Created by zoe on 2016/12/5.
@@ -25,8 +26,9 @@ public class TestPager {
      */
     public  static void init(){
         database = new Database();
-        database.openDB("test2");
+        database.openDB("testDB");
         pager  = database.getPager();
+        database.addTableTree("test",new BplusTree(3,database));
         schema = getSchema();
     }
 
