@@ -65,11 +65,15 @@ public class Database {
 	}
 
 	/** 设置和获取数据库名字 */
-	public void setDbSize(int size){
-		this.dbSize = size;
+	public int getDbSize() {
+		File file = new File(getDBFile());
+		if(file.exists() && file.isFile()){
+			this.dbSize = (int)file.getTotalSpace()%SpaceAllocation.PAGE_SIZE;
+		}
+		return dbSize;
 	}
-	public int getDbSize(){
-		return this.dbSize;
+	public void setDbSize(int dbSize) {
+		this.dbSize = dbSize;
 	}
 
 	/** 向表树映射中添加映射关系 */
@@ -109,30 +113,24 @@ public class Database {
 			/* 获取page1中的表和树的映射关系 */
 			Page page1 = pager.aquirePage(1);
 			List<Entry<Integer,String>> entryList = pager.readRecord(1);
-			for(int i=0;i<entryList.size();i++){
-				Page page = pager.aquirePage(entryList.get(i).getKey());
-				BplusNode root = new BplusNode(pager,page);
-				BplusNode head = new BplusNode(pager,pager.aquirePage(page1.getHead()));
-				BplusTree tree = new BplusTree(page1.getOrder(),this,root,head);
-				tableTreeMap.put(entryList.get(i).getValue(),tree);
+			if(entryList != null)
+			{
+				for(int i=0;i<entryList.size();i++){
+					Page page = pager.aquirePage(entryList.get(i).getKey());
+					BplusNode root = new BplusNode(pager,page);
+					BplusNode head = new BplusNode(pager,pager.aquirePage(page1.getHead()));
+					BplusTree tree = new BplusTree(page1.getOrder(),this,root,head);
+					tableTreeMap.put(entryList.get(i).getValue(),tree);
+				}
 			}
+
 			/* 获取表计数 */
-//			this.tableCount = page1.getTableCount();
+			this.tableCount = page1.getTableCount();
 			return 1;//打开成功
 		}
 	}
 
-	public int getDbSize() {
-		File file = new File(getDBFile());
-		if(file.exists() && file.isFile()){
-			this.dbSize = (int)file.getTotalSpace()%SpaceAllocation.PAGE_SIZE;
-		}
-		return dbSize;
-	}
 
-	public void setDbSize(int dbSize) {
-		this.dbSize = dbSize;
-	}
 
 	/**
 	 * sql语句的执行
