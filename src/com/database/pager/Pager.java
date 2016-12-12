@@ -71,7 +71,9 @@ public class Pager {
 //		pCache.printStatus();
 	}
 
+	public void commit(){
 
+	}
 	/**
 	 * 读取指定页号对应的页面
 	 * @param pgno	要获取的页面的页号
@@ -253,7 +255,7 @@ public class Pager {
 		RandomAccessFile raf = null;
 		try{
 			raf = new RandomAccessFile(this.database.getDBFile(),"rw");
-			for(int i = 1; i < pCache.getDirtyPgs().size(); i++)
+			for(int i = 0; i < pCache.getDirtyPgs().size(); i++)
 			{
 				List<Page> dirtyPgs = pCache.getDirtyPgs();
 				for(Page page : dirtyPgs){
