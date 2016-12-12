@@ -9,8 +9,6 @@ public class Pager {
 	private Database database;
 	private File journal;
 	private PCache pCache;
-//	private Page[] pages;
-//	private int pageNum;
 
 	private int mxPgno;
 	private int head;
@@ -20,6 +18,7 @@ public class Pager {
 		this.database = database;
 //		this.journal = new File(this.database.getDBName()+"-journal");
 		this.pCache = new PCache();
+		this.mxPgno = database.getDbSize() == 0? 1: database.getDbSize();
 	}
 
 	public int getMxPgno() {
@@ -72,7 +71,9 @@ public class Pager {
 //		pCache.printStatus();
 	}
 
+	public void commit(){
 
+	}
 	/**
 	 * 读取指定页号对应的页面
 	 * @param pgno	要获取的页面的页号
@@ -254,7 +255,7 @@ public class Pager {
 		RandomAccessFile raf = null;
 		try{
 			raf = new RandomAccessFile(this.database.getDBFile(),"rw");
-			for(int i = 1; i < pCache.getDirtyPgs().size(); i++)
+			for(int i = 0; i < pCache.getDirtyPgs().size(); i++)
 			{
 				List<Page> dirtyPgs = pCache.getDirtyPgs();
 				for(Page page : dirtyPgs){
@@ -324,11 +325,32 @@ public class Pager {
 			page.addCell(Utils.loadIntFromBytes(page.getData(), Position.CELL_IN_PAGE + (i*4) ));
 		}
 	}
-//	public Page newPage(){
-//		Page page = aquirePage(this.getMxPgno()+1);
-//		setMxPgno(getMxPgno()+1);
-//		return page;
-//	}
+
+	/**
+	 * 日后添加
+	 * @param nPage 新的大小
+	 */
+	public void truncateDatabaseImage(int nPage){
+
+	}
+
+	/**
+	 * 日后添加
+	 * @param nPage 新的页面大小
+	 */
+	public void truncate(int nPage){
+
+	}
+
+	/**
+	 * 分配一个全新的页面给用户
+	 * @return
+	 */
+	public Page newPage(){
+		Page page = aquirePage(this.mxPgno+1);
+		this.mxPgno ++;
+		return page;
+	}
 	public void freePage(int pgno){
 		pCache.free(pgno);
 	}
