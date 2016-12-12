@@ -19,6 +19,7 @@ public class Database {
 	private File dbFile;								//数据库文件
 	private int stat; 									//数据库状态，打开为1，关闭为0
 	private Pager pager; 								//pager对象
+	private int dbSize;
 
 	private Map<String,BplusTree> tableTreeMap;			//表与B+树映射列表
 
@@ -79,6 +80,7 @@ public class Database {
 			return 0;//打开不成功
 		}else{
 			setStat(1);
+			this.dbSize = (int)dbFile.getTotalSpace()/SpaceAllocation.PAGE_SIZE;
 			return 1;//打开成功
 		}
 	}
@@ -94,5 +96,12 @@ public class Database {
 			Execute execute = new Execute(this);
 			execute.queryDo(result);
 		}
+	}
+	/** 设置和获取数据库大小 */
+	public int getDbSize() {
+		return this.dbSize;
+	}
+	public void setDbSize(int dbSize) {
+		this.dbSize = dbSize;
 	}
 }
