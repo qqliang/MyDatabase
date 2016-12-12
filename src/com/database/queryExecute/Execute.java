@@ -45,7 +45,7 @@ public class Execute {
                     file.createNewFile();
 					db.setDBFile(file);
 					/* 调用pager对象创建page1 */
-					Page page1 = pager.aquirePage(1);
+					Page page1 = pager.newPage();
 					page1.setOrder((byte)3);		//设置树阶为3
 					page1.setMaxRowID(0);			//设置目前最大rowid为0
 					page1.setTableCount(0);			//设置目前表的计数为0
@@ -76,7 +76,7 @@ public class Execute {
 			}else{
 				Page page1 = pager.aquirePage(1);
 				BplusTree tree = new BplusTree(page1.getOrder(),db);
-				db.addTableTree(param[1], tree);
+				db.addTableTree(param[1], param[2], tree);
 			}
 			break;
 		case 22:

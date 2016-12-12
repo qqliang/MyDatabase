@@ -49,6 +49,7 @@ public class BplusTree{
         this.order = order;
         root = new BplusNode(db.getPager(), PageType.TABLE_LEAF);
         head = root;
+        root.page.setHead(head.page.getPgno());
         this.db = db;
     }
     public BplusTree(int order,Database db,BplusNode root,BplusNode head) {

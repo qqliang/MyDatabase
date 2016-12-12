@@ -23,6 +23,7 @@ public class main {
             return;
         }
         try {
+            System.out.println("请输入SQL语句");
             sql = br.readLine();
             while ( sql != "quit"){
                 db.exeSQL(sql);

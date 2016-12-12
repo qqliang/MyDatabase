@@ -9,6 +9,7 @@ import com.database.pager.TableSchema;
 import com.database.parse.CRUD;
 import com.database.parse.parser;
 import com.database.queryExecute.Execute;
+import com.sun.xml.internal.ws.api.wsdl.parser.XMLEntityResolver;
 
 import java.io.File;
 import java.util.*;
@@ -30,6 +31,7 @@ public class Database {
 	//构造函数
 	public Database(){
 		this.pager = new Pager(this);
+		this.tableTreeMap = new HashMap<>();
 	}
 
 	/** 设置和获取数据库名称 */
@@ -77,18 +79,17 @@ public class Database {
 	}
 
 	/** 向表树映射中添加映射关系 */
-	public void addTableTree(String tableName, BplusTree tree){
+	public void addTableTree(String tableName,String tableParam, BplusTree tree){
 		tableTreeMap.put(tableName, tree);
 
-		List<Entry<Integer,byte[]>> entryList = new ArrayList<>();
 		TableSchema schema = TableSchema.getTreeSchema();
+		Entry<Integer,byte[]> entry = new SimpleEntry<Integer, byte[]>(
+				tree.getRoot().page.getPgno(),schema.getBytes(tableCount,tableName+","+tableParam));
 
-		//向page1中添加映射关系
-		for(int i=0;i<tableTreeMap.size();i++){
-			entryList.add(new SimpleEntry<Integer, byte[]>(
-					tree.getRoot().page.getPgno(),schema.getBytes(tableCount,tableName)));
-		}
-		pager.writeData(1,entryList);
+		/* 向page1中追加映射关系：B+树根页号 -> 表名，表约束 */
+//		pager.appendData(1,entry);
+		pager.flush();
+		tableCount++;
 	}
 	/** 根据表名获取B+树 */
 	public BplusTree getTableTreeByName (String tableName){
@@ -137,7 +138,7 @@ public class Database {
 	 * @param sql
 	 */
 	public void exeSQL(String sql){
-		String result[] = CRUD.parser(sql);
+		String result[] = parser.parser(sql);
 		if(result[0] != null )
 		{
 			Execute execute = new Execute(this,pager);
