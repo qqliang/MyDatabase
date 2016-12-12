@@ -64,6 +64,14 @@ public class Database {
 		this.pager = pager;
 	}
 
+	/** 设置和获取数据库名字 */
+	public void setDbSize(int size){
+		this.dbSize = size;
+	}
+	public int getDbSize(){
+		return this.dbSize;
+	}
+
 	/** 向表树映射中添加映射关系 */
 	public void addTableTree(String tableName, BplusTree tree){
 		tableTreeMap.put(tableName, tree);
