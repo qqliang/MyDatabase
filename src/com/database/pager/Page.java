@@ -332,7 +332,8 @@ public class Page {
 
         if(bytes == null || bytes.length == 0)
             return null;
-
+        List<Integer> rowidList = new ArrayList();
+        rowidList.add(rowid);
         int usable = getUsable() - bytes.length;
         if(usable < 0){
             /**
@@ -341,8 +342,9 @@ public class Page {
         }else{
             int start = this.offset - bytes.length;
             this.data = Utils.fillBytes(bytes, this.data, start);
-            setOffset((short)start);
         }
+        setCells(rowidList);
+        setOffset((short)offset);
         return this.data;
     }
     /**
