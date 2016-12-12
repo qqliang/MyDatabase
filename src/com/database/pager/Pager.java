@@ -9,7 +9,6 @@ public class Pager {
 	private Database database;
 	private File journal;
 	private PCache pCache;
-//	private int pageNum;
 
 	private int mxPgno;
 	private int head;
@@ -340,11 +339,16 @@ public class Pager {
 	public void truncate(int nPage){
 
 	}
-//	public Page newPage(){
-//		Page page = aquirePage(this.getMxPgno()+1);
-//		setMxPgno(getMxPgno()+1);
-//		return page;
-//	}
+
+	/**
+	 * 分配一个全新的页面给用户
+	 * @return
+	 */
+	public Page newPage(){
+		Page page = aquirePage(this.mxPgno+1);
+		this.mxPgno ++;
+		return page;
+	}
 	public void freePage(int pgno){
 		pCache.free(pgno);
 	}
