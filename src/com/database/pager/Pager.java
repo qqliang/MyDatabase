@@ -200,7 +200,9 @@ public class Pager {
 		}
 		return row.substring(0,row.length()-1);
 	}
-
+	public void appendData(Page page, Map.Entry<Integer, byte[]> data){
+		page.appendData(data);
+	}
 	public void updateHeader(Page page){
 		pCache.makeDirty(page);
 	}
@@ -251,6 +253,9 @@ public class Pager {
 	 * 刷新页面，写磁盘
 	 */
 	public void flush(){
+		if(this.mxPgno < this.database.getDbSize()){
+			truncate(this.mxPgno);
+		}
 		RandomAccessFile raf = null;
 		try{
 			raf = new RandomAccessFile(this.database.getDBFile(),"rw");
@@ -312,12 +317,18 @@ public class Pager {
 	 */
 	private void populatePageObj(Page page){
 		page.setPgno(Utils.loadIntFromBytes(page.getData(), Position.PGNO_IN_PAGE));
+		if(page.getPgno() == 1)
+			page.setTableCount(Utils.loadIntFromBytes(page.getData(), Position.TABLE_COUNT_IN_FIRST_PAGE));
 		page.setPageType(page.getData()[Position.PGTYPE_IN_PAGE]);
 		page.setOffset(Utils.loadIntFromBytes(page.getData(), Position.OFFSET_IN_PAGE));
 		page.setOverflowPgno(Utils.loadIntFromBytes(page.getData(), Position.OVERFLOWPGNO_IN_PAGE));
 		page.setpParent(Utils.loadIntFromBytes(page.getData(), Position.PARENT_PAGE_IN_PAGE));
 		page.setpPrev(Utils.loadIntFromBytes(page.getData(), Position.PREV_PAGE_IN_PAGE));
 		page.setpNext(Utils.loadIntFromBytes(page.getData(), Position.NEXT_PAGE_IN_PAGE));
+		page.setOrder(page.getData()[Position.ORDER_IN_BPLUS_ROOT]);
+		page.setHead(Utils.loadIntFromBytes(page.getData(), Position.HEAD_IN_BPLUS_ROOT));
+		page.setMaxRowID(Utils.loadIntFromBytes(page.getData(), Position.MAX_ROWID_IN_BPLIS_ROOT));
+
 		byte nCell = page.getData()[Position.CELLNUM_IN_PAGE];
 		List<Integer> cells = new ArrayList<>();
 		for(int i = 0 ; i<nCell; i++){
@@ -326,15 +337,7 @@ public class Pager {
 	}
 
 	/**
-	 * 日后添加
-	 * @param nPage 新的大小
-	 */
-	public void truncateDatabaseImage(int nPage){
-
-	}
-
-	/**
-	 * 日后添加
+	 *
 	 * @param nPage 新的页面大小
 	 */
 	public void truncate(int nPage){
