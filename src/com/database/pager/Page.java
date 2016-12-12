@@ -74,7 +74,11 @@ public class Page {
     }
 
     public void setMaxRowID(int maxRowID) {
+        if(this.pgno ==1 )
+            return;
+
         this.maxRowID = maxRowID;
+        Utils.fillInt(this.maxRowID,this.data,Position.MAX_ROWID_IN_BPLIS_ROOT);
     }
 
     public int getpParent() {
@@ -101,7 +105,11 @@ public class Page {
     }
 
     public void setTableCount(int tableCount) {
+        if(this.pgno != 1)
+            return ;
+
         this.tableCount = tableCount;
+        Utils.fillInt(this.tableCount,this.data,Position.TABLE_COUNT_IN_FIRST_PAGE);
     }
 
     public int getHead() {
@@ -109,7 +117,21 @@ public class Page {
     }
 
     public void setHead(int head) {
-        this.head = head;
+        if(this.pgno == 1)
+            return ;
+
+        if(head < 2)
+            return ;
+
+        if(this.head == 1){
+            /**
+             * 有待补充
+             */
+        }
+        if(this.head > 1){
+            this.head = head;
+            Utils.fillInt(this.head,this.data,Position.HEAD_IN_BPLUS_ROOT);
+        }
     }
 
     public int getpPrev() {
@@ -189,7 +211,8 @@ public class Page {
      * @param order
      */
     public void setOrder(byte order) {
-        this.order = order;
+        this.data[Position.ORDER_IN_BPLUS_ROOT] = order;
+        this.order =  this.data[Position.PGTYPE_IN_PAGE];
     }
 
     public byte getnCell() {
