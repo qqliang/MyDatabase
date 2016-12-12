@@ -35,7 +35,8 @@ public class parser {
         return flag;
     }
 
-    public static String[] parser(String sql){
+
+    public static void parserCRUD(String sql){
         CCJSqlParserManager pm = new CCJSqlParserManager();
 
         Statement statement = null;
@@ -92,7 +93,22 @@ public class parser {
                 results[2] = delete.getWhere().toString();  // 删除条件
             }
         }
-        return results;
 
+
+    }
+
+    public static String[] parser(String str) {
+        String strOri=str.replaceAll(" ", "");  // 去除所有空格
+        String sql []=new String[3];
+        sql[0]=strOri.substring(0,6);	// create
+        sql[1]=strOri.substring(6,14);  // database
+        sql[2]=strOri.substring(14,16);  // 数据库名称
+        if(sql[0].toUpperCase().equals("CREATE") && sql[1].toUpperCase().equals("DATABASE")){
+            results[0] = "11"; // database 11
+            results[1] = sql[2];  //数据库名称
+        }else{
+            parserCRUD(str);
+        }
+        return results;
     }
 }
