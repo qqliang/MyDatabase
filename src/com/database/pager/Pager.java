@@ -9,7 +9,6 @@ public class Pager {
 	private Database database;
 	private File journal;
 	private PCache pCache;
-//	private Page[] pages;
 //	private int pageNum;
 
 	private int mxPgno;
@@ -20,6 +19,7 @@ public class Pager {
 		this.database = database;
 //		this.journal = new File(this.database.getDBName()+"-journal");
 		this.pCache = new PCache();
+		this.mxPgno = database.getDbSize();
 	}
 
 	public int getMxPgno() {
@@ -323,6 +323,22 @@ public class Pager {
 		for(int i = 0 ; i<nCell; i++){
 			page.addCell(Utils.loadIntFromBytes(page.getData(), Position.CELL_IN_PAGE + (i*4) ));
 		}
+	}
+
+	/**
+	 * 日后添加
+	 * @param nPage 新的大小
+	 */
+	public void truncateDatabaseImage(int nPage){
+
+	}
+
+	/**
+	 * 日后添加
+	 * @param nPage 新的页面大小
+	 */
+	public void truncate(int nPage){
+
 	}
 //	public Page newPage(){
 //		Page page = aquirePage(this.getMxPgno()+1);
