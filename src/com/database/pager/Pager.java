@@ -18,7 +18,7 @@ public class Pager {
 		this.database = database;
 //		this.journal = new File(this.database.getDBName()+"-journal");
 		this.pCache = new PCache();
-		this.mxPgno = database.getDbSize();
+		this.mxPgno = database.getDbSize() == 0? 1: database.getDbSize();
 	}
 
 	public int getMxPgno() {
