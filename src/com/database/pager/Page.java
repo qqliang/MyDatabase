@@ -324,9 +324,12 @@ public class Page {
 
     /**
      *  设置指定位置追加数据（有Bug，追加数据后rowid为追加）
-     * @param bytes    要添加的数据
+     * @param entry 要添加的数据
      */
-    public byte[] appendData( byte[] bytes){
+    public byte[] appendData( Map.Entry<Integer, byte[]> entry){
+        int rowid = entry.getKey();
+        byte[] bytes = entry.getValue();
+
         if(bytes == null || bytes.length == 0)
             return null;
 
@@ -340,7 +343,6 @@ public class Page {
             this.data = Utils.fillBytes(bytes, this.data, start);
             setOffset((short)start);
         }
-//        updateData();
         return this.data;
     }
     /**
