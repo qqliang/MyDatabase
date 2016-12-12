@@ -93,6 +93,8 @@ public class Database {
 		if (!dbFile.exists()) {
 			return 0;//打开不成功
 		}else{
+			this.dbSize = (int)(dbFile.getTotalSpace()%SpaceAllocation.PAGE_SIZE);
+			this.pager.setMxPgno(this.dbSize <= 0 ? 1: this.dbSize);
 			this.dbName = dbName;
 			setStat(1);
 
@@ -110,6 +112,18 @@ public class Database {
 //			this.tableCount = page1.getTableCount();
 			return 1;//打开成功
 		}
+	}
+
+	public int getDbSize() {
+		File file = new File(getDBFile());
+		if(file.exists() && file.isFile()){
+			this.dbSize = (int)file.getTotalSpace()%SpaceAllocation.PAGE_SIZE;
+		}
+		return dbSize;
+	}
+
+	public void setDbSize(int dbSize) {
+		this.dbSize = dbSize;
 	}
 
 	/**
