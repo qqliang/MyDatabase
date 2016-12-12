@@ -212,7 +212,7 @@ public class Page {
      */
     public void setOrder(byte order) {
         this.data[Position.ORDER_IN_BPLUS_ROOT] = order;
-        this.order =  this.data[Position.PGTYPE_IN_PAGE];
+        this.order =  this.data[Position.ORDER_IN_BPLUS_ROOT];
     }
 
     public byte getnCell() {
