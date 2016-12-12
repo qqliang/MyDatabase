@@ -26,7 +26,7 @@ public class BplusNode {
     private BplusNode next;           //叶子节点的下一个节点
     private List<BplusNode> children; //孩子节点
 
-    //记录信息：rowid->data。若为内部节点，data为孩子节点的页号，若为叶子节点，data为一条记录
+    /*记录信息：rowid->data。若为内部节点，data为孩子节点的页号，若为叶子节点，data为一条记录*/
     public List<Entry<Integer, String>> entries;
 
     /**
