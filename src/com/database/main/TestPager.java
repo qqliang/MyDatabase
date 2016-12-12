@@ -26,7 +26,7 @@ public class TestPager {
     public  static void init(){
         database = new Database();
         database.openDB("test2");
-        pager  = new Pager(database);
+        pager  = database.getPager();
         schema = getSchema();
     }
 
