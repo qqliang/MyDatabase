@@ -18,7 +18,7 @@ import java.util.AbstractMap.SimpleEntry;
 public class BplusNode {
 
     Pager pager ;
-    Page page;
+    public Page page;
     TableSchema schema;
 
     private BplusNode parent;         //父节点
@@ -27,7 +27,7 @@ public class BplusNode {
     private List<BplusNode> children; //孩子节点
 
     //记录信息：rowid->data。若为内部节点，data为孩子节点的页号，若为叶子节点，data为一条记录
-     List<Entry<Integer, String>> entries;
+    public List<Entry<Integer, String>> entries;
 
     /**
      * 构造函数
@@ -35,9 +35,8 @@ public class BplusNode {
     public BplusNode(Pager pager, byte type) {
         /* 构造一个新的节点，向pager请求分配一个新的页面，并设置页面类型 */
         this.pager = pager;
-        this.page = pager.newPage();
+//        this.page = pager.newPage();
         this.page.setPageType(type);
-        this.schema = getSchema();
         this.children = new ArrayList<>();
 
         entries = new ArrayList<Entry<Integer, String>>();
@@ -49,7 +48,6 @@ public class BplusNode {
         this.page = page;
         this.entries = pager.readRecord(page.getPgno());
         Collections.reverse(this.entries);
-        this.schema = getSchema();
         this.children = new ArrayList<>();
     }
 
@@ -722,9 +720,9 @@ public class BplusNode {
     /* 刷新页面数据域 */
     protected void flushPage(List<Entry<Integer,String>> entries, BplusNode node){
         if(node.page.getPageType() == PageType.TABLE_LEAF){
-            schema = getSchema();
+            schema = schema.getTableSchema();
         }else{
-            schema = getSchema1();
+            schema = schema.getInternalSchema();
         }
 
         List<Entry<Integer,byte[]>> dataList = new ArrayList<>();
@@ -755,43 +753,5 @@ public class BplusNode {
     }
     public String toString(){
         return page.toString();
-
-    }
-
-    public static TableSchema getSchema() {
-        TableSchema record = new TableSchema();
-        List<Column> cols = new ArrayList<Column>();
-        Column idCol =  new Column();
-        idCol.setName("id");
-        idCol.setType(DataType.INTEGER);
-        idCol.setConstraint(ColumnConstraint.NONE);
-
-        Column nameCol =  new Column();
-        nameCol.setName("name");
-        nameCol.setType(DataType.TEXT);
-        nameCol.setConstraint(ColumnConstraint.NONE);
-
-        Column ageCol =  new Column();
-        ageCol.setName("age");
-        ageCol.setType(DataType.TINY_INT);
-        ageCol.setConstraint(ColumnConstraint.NONE);
-
-        cols.add(idCol);
-        cols.add(nameCol);
-        cols.add(ageCol);
-        record.setColumns(cols);
-        return record;
-    }
-    public static TableSchema getSchema1() {
-        TableSchema record = new TableSchema();
-        List<Column> cols = new ArrayList<Column>();
-        Column idCol =  new Column();
-        idCol.setName("pgno");
-        idCol.setType(DataType.INTEGER);
-        idCol.setConstraint(ColumnConstraint.NONE);
-
-        cols.add(idCol);
-        record.setColumns(cols);
-        return record;
     }
 }
