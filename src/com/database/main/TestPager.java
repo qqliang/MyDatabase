@@ -27,10 +27,9 @@ public class TestPager {
      */
     public  static void init(){
         database = new Database();
-        database.openDB("testDB");
-        pager  = database.getPager();
-        database.addTableTree("test", "create", new BplusTree(3,database));
+        database.openDB("testPager");
         schema = getSchema();
+        pager = database.getPager();
     }
 
     public static void main(String[] args){
@@ -166,8 +165,9 @@ public class TestPager {
 //        pager.flush();
         Page page = pager.aquirePage(2);
         page.setOrder((byte)3);
-        String row = pager.readDataByRowid(2,2).getValue();
-        System.out.println("row:"+row);
+        Map.Entry<Integer, String> entry = pager.readDataByRowid(2,2);
+        if(entry != null)
+            System.out.println("row:"+entry.getValue());
     }
 
     /**
