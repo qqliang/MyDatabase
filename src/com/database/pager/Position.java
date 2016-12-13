@@ -14,13 +14,15 @@ public class Position {
     public static byte ORDER_IN_BPLUS_ROOT = 25;
     public static int HEAD_IN_BPLUS_ROOT = 26;
     public static int MAX_ROWID_IN_BPLIS_ROOT = 30;
-    public static byte CELLNUM_IN_PAGE = 34;
-    public static int CELL_IN_PAGE = 35;
+    public static int MAX_PGNO_IN_FIRST_PAGE = 34;
+    //page 1 header
+    public static int TABLE_COUNT_IN_FIRST_PAGE = 38;
+    public static byte CELLNUM_IN_PAGE = 42;
+    public static int CELL_IN_PAGE = 43;
 
     public static int ROWID_IN_RECORD = 0;
     public static int HEADER_IN_RECORD = 4;
 
 
-    //page 1 header
-    public static int TABLE_COUNT_IN_FIRST_PAGE = 120;
+
 }

@@ -50,7 +50,7 @@ public class Page {
     public Page(){
         init();
     }
-    private void init(){
+    public void init(){
         this.size = SpaceAllocation.PAGE_SIZE;
         this.data = new byte[this.size];
         this.sectorSize = SpaceAllocation.SECTOR_SIZE;
