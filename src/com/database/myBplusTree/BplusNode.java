@@ -47,8 +47,11 @@ public class BplusNode {
         this.pager = pager;
         this.page = page;
         this.entries = pager.readRecord(page.getPgno());
-        if(this.entries != null )
+        if(this.entries != null ){
             Collections.reverse(this.entries);
+        }else{
+            this.entries = new ArrayList<>();
+        }
         this.children = new ArrayList<>();
     }
 
@@ -721,9 +724,9 @@ public class BplusNode {
     /* 刷新页面数据域 */
     protected void flushPage(List<Entry<Integer,String>> entries, BplusNode node){
         if(node.page.getPageType() == PageType.TABLE_LEAF){
-            node.schema = node.schema.getTableSchema();
+//            node.schema = node.schema.getTableSchema();
         }else{
-            node.schema = node.schema.getInternalSchema();
+//            node.schema = node.schema.getInternalSchema();
         }
 
         List<Entry<Integer,byte[]>> dataList = new ArrayList<>();

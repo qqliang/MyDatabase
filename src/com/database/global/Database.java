@@ -24,7 +24,7 @@ public class Database {
 	private int dbSize;									//数据库大小
 	private Page page1;									//数据库第1页
 
-	private Map<String,BplusTree> tableTreeMap;			//表与B+树映射列表
+	private Map<String,Map<BplusTree,TableSchema>> tableTreeMap;			//表与B+树映射列表
 	private int tableCount;								//数据库中表的个数
 
 	//构造函数
@@ -87,15 +87,20 @@ public class Database {
 		pager.flush();
 	}
 
-	/** 向表树映射中添加映射关系 */
-	public void addTableTree(String tableName,String sql, BplusTree tree){
-		tableTreeMap.put(tableName, tree);
 
-		TableSchema schema = TableSchema.getTreeSchema();
+
+	/** 向表树映射中添加映射关系 */
+	public void addTableTree(String tableName,String sql, BplusTree tree,TableSchema schema){
+		HashMap<BplusTree,TableSchema> map = new HashMap<BplusTree,TableSchema>();
+		map.put(tree,schema);
+		tableTreeMap.put(tableName, map);
+
 		Integer rootPgno = tree.getRoot().page.getPgno();
 		String str = tableName+","+sql.replace(",","#");
+
+		TableSchema rootSchema = TableSchema.getTreeSchema();
 		Entry<Integer,byte[]> entry = new SimpleEntry<Integer, byte[]>(
-				rootPgno,schema.getBytes(rootPgno,str));
+				rootPgno,rootSchema.getBytes(rootPgno,str));
 		tableCount++;
 
 		/* 向page1中追加映射关系：B+树根页号 -> 表名，表约束 */
@@ -136,11 +141,21 @@ public class Database {
 			if(entryList != null)
 			{
 				for(int i=0;i<entryList.size();i++){
+					String value[] = entryList.get(i).getValue().split(",");
+					//获取B+树根页
 					Page page = pager.aquirePage(entryList.get(i).getKey());
+					//构建B+树
 					BplusNode root = new BplusNode(pager,page);
 					BplusNode head = new BplusNode(pager,pager.aquirePage(page.getHead()));
 					BplusTree tree = new BplusTree(page.getOrder(),this,root,head);
-					tableTreeMap.put(entryList.get(i).getValue().split(",")[0].trim(),tree);
+					//获取表结构
+					String sql = value[1].trim().replace("#",",");
+					String result[] = parser.parser(sql);
+					TableSchema schema = TableSchema.buildTableSchema(result[2].substring(result[2].indexOf('[')+1,result[2].indexOf(']')));
+					//存储映射关系
+					HashMap<BplusTree,TableSchema> map = new HashMap<>();
+					map.put(tree,schema);
+					tableTreeMap.put(value[0].trim(),map);
 				}
 			}
 
