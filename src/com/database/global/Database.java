@@ -122,7 +122,7 @@ public class Database {
 			return 0;//打开不成功
 		}else{
 			this.dbSize = (int)(dbFile.getTotalSpace()%SpaceAllocation.PAGE_SIZE);
-			this.pager.setMxPgno(this.dbSize <= 0 ? 1: this.dbSize);
+			this.pager.setMxPgno(this.dbSize <= 0 ? 0: this.dbSize);
 			this.dbName = dbName;
 			setStat(1);
 
