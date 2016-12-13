@@ -26,6 +26,7 @@ public class Pager {
 
 	public void setMxPgno(int mxPgno) {
 		this.mxPgno = mxPgno;
+
 	}
 
 	public int getHead() {
@@ -202,6 +203,9 @@ public class Pager {
 	}
 	public void appendData(Page page, Map.Entry<Integer, byte[]> data){
 		page.appendData(data);
+		pCache.makeDirty(page);
+
+
 	}
 	public void updateHeader(Page page){
 		pCache.makeDirty(page);
@@ -263,7 +267,9 @@ public class Pager {
 			{
 				List<Page> dirtyPgs = pCache.getDirtyPgs();
 				for(Page page : dirtyPgs){
-					updateMxPgno();
+					if(page.getPgno() == 1){
+						Utils.fillInt(this.mxPgno, page.getData(), Position.MAX_PGNO_IN_FIRST_PAGE);
+					}
 					raf.seek((page.getPgno()-1)*SpaceAllocation.PAGE_SIZE);
 					raf.write(page.getData());
 				}
@@ -279,11 +285,7 @@ public class Pager {
 
 		}
 	}
-	public void updateMxPgno(){
-		Page page = aquirePage(1);
-		byte[] data = page.getData();
-		Utils.fillInt(this.mxPgno, data, Position.MAX_PGNO_IN_FIRST_PAGE);
-	}
+
 	/**
 	 *	根据页号，将数据加载到一个Page
 	 * @param pgno 页号
@@ -303,7 +305,6 @@ public class Pager {
 			raf.read(data, 0 , SpaceAllocation.PAGE_SIZE);
 			newPage.copyData(data);
 			populatePageObj(newPage);
-			this.mxPgno = Utils.loadIntFromBytes(newPage.getData(),Position.MAX_PGNO_IN_FIRST_PAGE);
 			return newPage;
 		}catch (IOException e){
 			e.printStackTrace();
