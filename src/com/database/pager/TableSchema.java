@@ -210,19 +210,18 @@ public class TableSchema {
         List<Column> cols = new ArrayList<Column>();
         Column idCol =  new Column();
 
-        idCol.setName("tableCount");
-        idCol.setType(DataType.INTEGER);
-        idCol.setConstraint(ColumnConstraint.NONE);
-
         idCol.setName("tableName");
         idCol.setType(DataType.TEXT);
         idCol.setConstraint(ColumnConstraint.NONE);
 
-        idCol.setName("sql");
-        idCol.setType(DataType.TEXT);
-        idCol.setConstraint(ColumnConstraint.NONE);
-
         cols.add(idCol);
+        Column idCol1 =  new Column();
+
+        idCol1.setName("sql");
+        idCol1.setType(DataType.TEXT);
+        idCol1.setConstraint(ColumnConstraint.NONE);
+
+        cols.add(idCol1);
         record.setColumns(cols);
         return record;
     }

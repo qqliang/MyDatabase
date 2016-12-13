@@ -194,7 +194,7 @@ public class Pager {
 		return list;
 	}
 
-	private String colsToRow(List<String> cols){
+	public String colsToRow(List<String> cols){
 		StringBuilder row = new StringBuilder();
 		for(String col : cols){
 			row.append(col+",");
