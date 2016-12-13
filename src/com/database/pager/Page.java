@@ -344,7 +344,7 @@ public class Page {
             this.data = Utils.fillBytes(bytes, this.data, start);
         }
         setCells(rowidList);
-        setOffset((short)offset);
+        setOffset((short)this.offset - bytes.length);
         return this.data;
     }
     /**
