@@ -101,6 +101,8 @@ public class Pager {
 		byte[] data = page.getData();
 //		if(page.getPageType() == PageType.TABLE_LEAF){
 			int offset = page.getOffset();
+			if(offset == SpaceAllocation.PAGE_SIZE)
+				return null;
 			int szHdr = Utils.loadIntFromBytes(data, offset+4);
 			int skip = szHdr;
 			int[] types = new int[szHdr - SpaceAllocation.RECORD_HEADER];
