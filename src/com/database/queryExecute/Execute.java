@@ -20,7 +20,7 @@ public class Execute {
 	}
 
 	//查询执行
-	public void queryDo(String[] param){
+	public void queryDo(String[] param, String sql){
 		/**
 		 * param[0]: 执行操作；
 		 * 		11 —— 创建数据库
@@ -76,7 +76,7 @@ public class Execute {
 
 				TableSchema schema = new TableSchema();
 				BplusTree tree = new BplusTree(3,db);
-				db.addTableTree(param[1], param[2], tree);
+				db.addTableTree(param[1], sql, tree);
 			}
 			break;
 		case 22:

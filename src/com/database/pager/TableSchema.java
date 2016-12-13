@@ -209,7 +209,16 @@ public class TableSchema {
         TableSchema record = new TableSchema();
         List<Column> cols = new ArrayList<Column>();
         Column idCol =  new Column();
+
+        idCol.setName("tableCount");
+        idCol.setType(DataType.INTEGER);
+        idCol.setConstraint(ColumnConstraint.NONE);
+
         idCol.setName("tableName");
+        idCol.setType(DataType.TEXT);
+        idCol.setConstraint(ColumnConstraint.NONE);
+
+        idCol.setName("sql");
         idCol.setType(DataType.TEXT);
         idCol.setConstraint(ColumnConstraint.NONE);
 

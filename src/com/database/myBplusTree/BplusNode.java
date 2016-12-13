@@ -720,16 +720,16 @@ public class BplusNode {
     /* 刷新页面数据域 */
     protected void flushPage(List<Entry<Integer,String>> entries, BplusNode node){
         if(node.page.getPageType() == PageType.TABLE_LEAF){
-            schema = schema.getTableSchema();
+            node.schema = node.schema.getTableSchema();
         }else{
-            schema = schema.getInternalSchema();
+            node.schema = node.schema.getInternalSchema();
         }
 
         List<Entry<Integer,byte[]>> dataList = new ArrayList<>();
         for(int i=0; i<entries.size();i++)
         {
             dataList.add(new AbstractMap.SimpleEntry<Integer,byte[]>(entries.get(i).getKey(),
-                    schema.getBytes(entries.get(i).getKey(),entries.get(i).getValue())));
+                    node.schema.getBytes(entries.get(i).getKey(),entries.get(i).getValue())));
         }
         pager.writeData(node.page.getPgno(),dataList);
     }

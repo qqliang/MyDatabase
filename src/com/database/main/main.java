@@ -17,7 +17,7 @@ public class main {
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        int rc = db.openDB("testDB1");
+        int rc = db.openDB("testDB");
         if(rc==0){
             System.out.println("数据库不存在");
             return;

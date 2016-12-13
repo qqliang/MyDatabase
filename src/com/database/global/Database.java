@@ -2,14 +2,12 @@ package com.database.global;
 
 import com.database.myBplusTree.BplusNode;
 import com.database.myBplusTree.BplusTree;
-import com.database.pager.Page;
-import com.database.pager.Pager;
-import com.database.pager.Table;
-import com.database.pager.TableSchema;
+import com.database.pager.*;
 import com.database.parse.CRUD;
 import com.database.parse.parser;
 import com.database.queryExecute.Execute;
 import com.sun.xml.internal.ws.api.wsdl.parser.XMLEntityResolver;
+import com.sun.xml.internal.ws.dump.LoggingDumpTube;
 
 import java.io.File;
 import java.util.*;
@@ -90,12 +88,13 @@ public class Database {
 	}
 
 	/** 向表树映射中添加映射关系 */
-	public void addTableTree(String tableName,String tableParam, BplusTree tree){
+	public void addTableTree(String tableName,String sql, BplusTree tree){
 		tableTreeMap.put(tableName, tree);
 
 		TableSchema schema = TableSchema.getTreeSchema();
+		String str = tableName+","+sql.replace(",","#");
 		Entry<Integer,byte[]> entry = new SimpleEntry<Integer, byte[]>(
-				tree.getRoot().page.getPgno(),schema.getBytes(tableCount,tableName+","+tableParam));
+				tableCount,schema.getBytes(tree.getRoot().page.getPgno(),str));
 		tableCount++;
 
 		/* 向page1中追加映射关系：B+树根页号 -> 表名，表约束 */
@@ -122,12 +121,13 @@ public class Database {
 			return 0;//打开不成功
 		}else{
 			this.dbSize = (int)(dbFile.getTotalSpace()%SpaceAllocation.PAGE_SIZE);
-			this.pager.setMxPgno(this.dbSize <= 0 ? 0: this.dbSize);
+//			this.pager.setMxPgno(this.dbSize <= 0 ? 0: this.dbSize);
 			this.dbName = dbName;
 			setStat(1);
 
 			/* 获取page1中的表和树的映射关系 */
 			page1 = pager.aquirePage(1);
+			this.pager.setMxPgno(Utils.loadIntFromBytes(page1.getData(), Position.MAX_PGNO_IN_FIRST_PAGE));
 			List<Entry<Integer,String>> entryList = pager.readRecord(1);
 			if(entryList != null)
 			{
@@ -157,7 +157,7 @@ public class Database {
 		if(result[0] != null )
 		{
 			Execute execute = new Execute(this,pager);
-			execute.queryDo(result);
+			execute.queryDo(result,sql);
 		}
 	}
 }
