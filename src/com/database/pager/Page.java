@@ -120,15 +120,15 @@ public class Page {
         if(this.pgno == 1)
             return ;
 
-        if(head < 2)
-            return ;
+//        if(head < 2)
+//            return ;
 
-        if(this.head == 1){
+        if(head == 1){
             /**
              * 有待补充
              */
         }
-        if(this.head > 1){
+        if(head > 1){
             this.head = head;
             Utils.fillInt(this.head,this.data,Position.HEAD_IN_BPLUS_ROOT);
         }

@@ -92,15 +92,19 @@ public class Database {
 		tableTreeMap.put(tableName, tree);
 
 		TableSchema schema = TableSchema.getTreeSchema();
+		Integer rootPgno = tree.getRoot().page.getPgno();
 		String str = tableName+","+sql.replace(",","#");
 		Entry<Integer,byte[]> entry = new SimpleEntry<Integer, byte[]>(
-				tableCount,schema.getBytes(tree.getRoot().page.getPgno(),str));
+				rootPgno,schema.getBytes(rootPgno,str));
 		tableCount++;
 
 		/* 向page1中追加映射关系：B+树根页号 -> 表名，表约束 */
 		page1 = pager.aquirePage(1);
 		pager.appendData(page1,entry);
 		page1.setTableCount(tableCount);
+
+		pager.updateHeader(page1);
+		pager.updateHeader(tree.getRoot().page);
 
 		pager.flush();
 
@@ -134,9 +138,9 @@ public class Database {
 				for(int i=0;i<entryList.size();i++){
 					Page page = pager.aquirePage(entryList.get(i).getKey());
 					BplusNode root = new BplusNode(pager,page);
-					BplusNode head = new BplusNode(pager,pager.aquirePage(page1.getHead()));
-					BplusTree tree = new BplusTree(page1.getOrder(),this,root,head);
-					tableTreeMap.put(entryList.get(i).getValue(),tree);
+					BplusNode head = new BplusNode(pager,pager.aquirePage(page.getHead()));
+					BplusTree tree = new BplusTree(page.getOrder(),this,root,head);
+					tableTreeMap.put(entryList.get(i).getValue().split(",")[0].trim(),tree);
 				}
 			}
 

@@ -47,7 +47,8 @@ public class BplusNode {
         this.pager = pager;
         this.page = page;
         this.entries = pager.readRecord(page.getPgno());
-        Collections.reverse(this.entries);
+        if(this.entries != null )
+            Collections.reverse(this.entries);
         this.children = new ArrayList<>();
     }
 
