@@ -4,6 +4,7 @@ import com.database.global.ColumnConstraint;
 import com.database.global.DataType;
 import com.database.global.Database;
 import com.database.pager.Column;
+import com.database.pager.Page;
 import com.database.pager.Pager;
 import com.database.pager.TableSchema;
 import com.database.myBplusTree.BplusTree;
@@ -28,7 +29,7 @@ public class TestPager {
         database = new Database();
         database.openDB("testDB");
         pager  = database.getPager();
-        database.addTableTree("test",new BplusTree(3,database));
+        database.addTableTree("test", "create", new BplusTree(3,database));
         schema = getSchema();
     }
 
@@ -63,7 +64,7 @@ public class TestPager {
         entryList.add(map.entrySet().iterator().next());
 
         map = new HashMap<>();
-        map.put(++rowid,schema.getBytes(rowid, "4,dxr,27"));
+        map.put(++rowid,schema.getBytes(rowid, "4,dx # r,27"));
         entryList.add(map.entrySet().iterator().next());
 
         map = new HashMap<>();
@@ -113,7 +114,7 @@ public class TestPager {
         entryList.add(map.entrySet().iterator().next());
 
         map = new HashMap<>();
-        map.put(++rowid,schema.getBytes(rowid, "4,dxr,27"));
+        map.put(++rowid,schema.getBytes(rowid, "4,dx # r,27"));
         entryList.add(map.entrySet().iterator().next());
 
         map = new HashMap<>();
@@ -135,34 +136,36 @@ public class TestPager {
      */
     public static void testReadByRowid(){
 
-        int rowid = 0;
-        List<Map.Entry<Integer,byte[]>> entryList = new ArrayList<Map.Entry<Integer, byte[]>>();
-        Map<Integer,byte[]> map = new HashMap<>();
-        map.put(++rowid,schema.getBytes(rowid, "1,zhouyu,22"));
-        entryList.add(map.entrySet().iterator().next());
-
-        map = new HashMap<>();
-        map.put(++rowid,schema.getBytes(rowid, "2,lqq,22"));
-        entryList.add(map.entrySet().iterator().next());
-
-        map = new HashMap<>();
-        map.put(++rowid,schema.getBytes(rowid, "3,hh,26"));
-        entryList.add(map.entrySet().iterator().next());
-
-        map = new HashMap<>();
-        map.put(++rowid,schema.getBytes(rowid, "4,dxr,27"));
-        entryList.add(map.entrySet().iterator().next());
-
-        map = new HashMap<>();
-        map.put(++rowid,schema.getBytes(rowid, "5,yyc,27"));
-        entryList.add(map.entrySet().iterator().next());
-
-        map = new HashMap<>();
-        map.put(++rowid,schema.getBytes(rowid, "6,whw,22"));
-        entryList.add(map.entrySet().iterator().next());
-
-        pager.writeData(2,entryList);
-
+//        int rowid = 0;
+//        List<Map.Entry<Integer,byte[]>> entryList = new ArrayList<Map.Entry<Integer, byte[]>>();
+//        Map<Integer,byte[]> map = new HashMap<>();
+//        map.put(++rowid,schema.getBytes(rowid, "1,zhouyu,22"));
+//        entryList.add(map.entrySet().iterator().next());
+//
+//        map = new HashMap<>();
+//        map.put(++rowid,schema.getBytes(rowid, "2,lqq,22"));
+//        entryList.add(map.entrySet().iterator().next());
+//
+//        map = new HashMap<>();
+//        map.put(++rowid,schema.getBytes(rowid, "3,hh,26"));
+//        entryList.add(map.entrySet().iterator().next());
+//
+//        map = new HashMap<>();
+//        map.put(++rowid,schema.getBytes(rowid, "4,dxr,27"));
+//        entryList.add(map.entrySet().iterator().next());
+//
+//        map = new HashMap<>();
+//        map.put(++rowid,schema.getBytes(rowid, "5,yyc,27"));
+//        entryList.add(map.entrySet().iterator().next());
+//
+//        map = new HashMap<>();
+//        map.put(++rowid,schema.getBytes(rowid, "6,whw,22"));
+//        entryList.add(map.entrySet().iterator().next());
+//
+//        pager.writeData(2,entryList);
+//        pager.flush();
+        Page page = pager.aquirePage(2);
+        page.setOrder((byte)3);
         String row = pager.readDataByRowid(2,2).getValue();
         System.out.println("row:"+row);
     }
