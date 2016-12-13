@@ -86,8 +86,8 @@ public class Page {
     }
 
     public void setpParent(int pParent) {
-        if(pParent < 2)
-            return ;
+//        if(pParent < 2)
+//            return ;
 
         if(this.pParent == 1){
             /**
