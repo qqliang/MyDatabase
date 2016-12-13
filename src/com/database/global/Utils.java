@@ -82,7 +82,7 @@ public class Utils {
     public static byte[] fillBytes(byte[] value, byte[] bytes,int start)
     {
         int len = value.length;
-        if(bytes.length < start + len - 1)
+        if(bytes.length < start + len )
             return null;
 
         for(int i =0;i < len; i++){
