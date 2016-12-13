@@ -120,8 +120,6 @@ public class Page {
         if(this.pgno == 1)
             return ;
 
-//        if(head < 2)
-//            return ;
 
         if(head == 1){
             /**
