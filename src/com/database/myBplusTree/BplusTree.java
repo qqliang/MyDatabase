@@ -48,6 +48,9 @@ public class BplusTree{
         }
         this.order = order;
         root = new BplusNode(db.getPager(), PageType.TABLE_LEAF);
+        root.page.setOrder((byte)order);
+        root.page.setMaxRowID(0);			//设置目前最大rowid为0
+        this.maxRowid = 0;
         head = root;
         root.page.setHead(head.page.getPgno());
         this.db = db;

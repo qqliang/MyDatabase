@@ -24,6 +24,7 @@ public class Database {
 	private int stat; 									//数据库状态，打开为1，关闭为0
 	private Pager pager; 								//pager对象
 	private int dbSize;									//数据库大小
+	private Page page1;									//数据库第1页
 
 	private Map<String,BplusTree> tableTreeMap;			//表与B+树映射列表
 	private int tableCount;								//数据库中表的个数
@@ -78,6 +79,16 @@ public class Database {
 		this.dbSize = dbSize;
 	}
 
+	/** 设置和获取数据库名字 */
+	public Page getPage1() {
+		page1 = pager.aquirePage(1);
+		return page1;
+	}
+	public void setPage1(Page page1){
+		this.page1 = page1;
+		pager.flush();
+	}
+
 	/** 向表树映射中添加映射关系 */
 	public void addTableTree(String tableName,String tableParam, BplusTree tree){
 		tableTreeMap.put(tableName, tree);
@@ -85,11 +96,15 @@ public class Database {
 		TableSchema schema = TableSchema.getTreeSchema();
 		Entry<Integer,byte[]> entry = new SimpleEntry<Integer, byte[]>(
 				tree.getRoot().page.getPgno(),schema.getBytes(tableCount,tableName+","+tableParam));
+		tableCount++;
 
 		/* 向page1中追加映射关系：B+树根页号 -> 表名，表约束 */
-		pager.appendData(pager.aquirePage(1),entry);
+		page1 = pager.aquirePage(1);
+		pager.appendData(page1,entry);
+		page1.setTableCount(tableCount);
+
 		pager.flush();
-		tableCount++;
+
 	}
 	/** 根据表名获取B+树 */
 	public BplusTree getTableTreeByName (String tableName){
@@ -112,7 +127,7 @@ public class Database {
 			setStat(1);
 
 			/* 获取page1中的表和树的映射关系 */
-			Page page1 = pager.aquirePage(1);
+			page1 = pager.aquirePage(1);
 			List<Entry<Integer,String>> entryList = pager.readRecord(1);
 			if(entryList != null)
 			{

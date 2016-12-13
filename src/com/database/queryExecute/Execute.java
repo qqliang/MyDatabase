@@ -6,6 +6,7 @@ import com.database.global.*;
 import com.database.myBplusTree.BplusTree;
 import com.database.pager.Page;
 import com.database.pager.Pager;
+import com.database.pager.TableSchema;
 
 public class Execute {
 	private static String path = "D:/db";//根目录
@@ -46,11 +47,9 @@ public class Execute {
 					db.setDBFile(file);
 					/* 调用pager对象创建page1 */
 					Page page1 = pager.newPage();
-					page1.setOrder((byte)3);		//设置树阶为3
-					page1.setMaxRowID(0);			//设置目前最大rowid为0
 					page1.setTableCount(0);			//设置目前表的计数为0
 					pager.updateHeader(page1);
-					pager.flush();
+					db.setPage1(page1);
 					//打开该数据库
 					if(db.getStat() == 0){
 						db.setDBName(param[1]);		//设置数据库名称
@@ -74,8 +73,9 @@ public class Execute {
 			if(db.getStat() != 1){
 				System.out.println("未打开数据库，请先打开数据库!");
 			}else{
-				Page page1 = pager.aquirePage(1);
-				BplusTree tree = new BplusTree(page1.getOrder(),db);
+
+				TableSchema schema = new TableSchema();
+				BplusTree tree = new BplusTree(3,db);
 				db.addTableTree(param[1], param[2], tree);
 			}
 			break;
