@@ -24,7 +24,8 @@ public class Database {
 	private int dbSize;									//数据库大小
 	private Page page1;									//数据库第1页
 
-	private Map<String,Map<BplusTree,TableSchema>> tableTreeMap;			//表与B+树映射列表
+	private Map<String,BplusTree> tableTreeMap;			//表与B+树映射列表
+	private TableSchema tableSchema;					//用于存储表与B+树映射的结构
 	private int tableCount;								//数据库中表的个数
 
 	//构造函数
@@ -77,6 +78,14 @@ public class Database {
 		this.dbSize = dbSize;
 	}
 
+	/** 设置和获取表与B+树存储结构 */
+	public TableSchema getTableSchema() {
+		return tableSchema;
+	}
+	public void setTableSchema(TableSchema tableSchema) {
+		this.tableSchema = tableSchema;
+	}
+
 	/** 设置和获取数据库名字 */
 	public Page getPage1() {
 		page1 = pager.aquirePage(1);
@@ -90,17 +99,15 @@ public class Database {
 
 
 	/** 向表树映射中添加映射关系 */
-	public void addTableTree(String tableName,String sql, BplusTree tree,TableSchema schema){
-		HashMap<BplusTree,TableSchema> map = new HashMap<BplusTree,TableSchema>();
-		map.put(tree,schema);
-		tableTreeMap.put(tableName, map);
+	public void addTableTree(String tableName,String sql, BplusTree tree){
+		tableTreeMap.put(tableName,tree);
 
 		Integer rootPgno = tree.getRoot().page.getPgno();
 		String str = tableName+","+sql.replace(",","#");
 
-		TableSchema rootSchema = TableSchema.getTreeSchema();
+		tableSchema = TableSchema.getTreeSchema();
 		Entry<Integer,byte[]> entry = new SimpleEntry<Integer, byte[]>(
-				rootPgno,rootSchema.getBytes(rootPgno,str));
+				rootPgno,tableSchema.getBytes(rootPgno,str));
 		tableCount++;
 
 		/* 向page1中追加映射关系：B+树根页号 -> 表名，表约束 */
@@ -127,7 +134,12 @@ public class Database {
 	public int openDB(String dbName){
 		dbFile = new File(path + "/" + dbName);
 		if (!dbFile.exists()) {
-			return 0;//打开不成功
+			String result[] = new String[2];
+			result[0] = "11";
+			result[1] = dbName;
+			Execute execute = new Execute(this,pager);
+			execute.queryDo(result,null);
+			return 1;//打开不成功
 		}else{
 			this.dbSize = (int)(dbFile.getTotalSpace()%SpaceAllocation.PAGE_SIZE);
 //			this.pager.setMxPgno(this.dbSize <= 0 ? 0: this.dbSize);
@@ -144,18 +156,19 @@ public class Database {
 					String value[] = entryList.get(i).getValue().split(",");
 					//获取B+树根页
 					Page page = pager.aquirePage(entryList.get(i).getKey());
-					//构建B+树
-					BplusNode root = new BplusNode(pager,page);
-					BplusNode head = new BplusNode(pager,pager.aquirePage(page.getHead()));
-					BplusTree tree = new BplusTree(page.getOrder(),this,root,head);
+
 					//获取表结构
 					String sql = value[1].trim().replace("#",",");
 					String result[] = parser.parser(sql);
 					TableSchema schema = TableSchema.buildTableSchema(result[2].substring(result[2].indexOf('[')+1,result[2].indexOf(']')));
+
+					//构建B+树
+					BplusNode root = new BplusNode(pager, page, schema);
+					BplusNode head = new BplusNode(pager,pager.aquirePage(page.getHead()), schema);
+					BplusTree tree = new BplusTree(page.getOrder(),this,root,head, schema);
+
 					//存储映射关系
-					HashMap<BplusTree,TableSchema> map = new HashMap<>();
-					map.put(tree,schema);
-					tableTreeMap.put(value[0].trim(),map);
+					tableTreeMap.put(value[0].trim(),tree);
 				}
 			}
 

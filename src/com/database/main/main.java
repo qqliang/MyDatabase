@@ -25,10 +25,11 @@ public class main {
         try {
             System.out.println("请输入SQL语句");
             sql = br.readLine();
-            while ( sql != "quit"){
+            while ( !sql.equals("quit")){
                 db.exeSQL(sql);
                 sql = br.readLine();
             }
+            System.out.println("已退出！");
         }catch (IOException e){
             e.printStackTrace();
         }

@@ -74,8 +74,8 @@ public class Execute {
 				System.out.println("未打开数据库，请先打开数据库!");
 			}else{
 				TableSchema schema = TableSchema.buildTableSchema(param[2].substring(param[2].indexOf('[')+1,param[2].indexOf(']')));
-				BplusTree tree = new BplusTree(3,db);
-				db.addTableTree(param[1], sql, tree,schema);
+				BplusTree tree = new BplusTree(3,db,schema);
+				db.addTableTree(param[1], sql, tree);
 			}
 			break;
 		case 22:
@@ -92,7 +92,12 @@ public class Execute {
 				String value = param[2].substring(param[2].indexOf('(')+1,param[2].indexOf(')'));
 				String tableName = param[1];
 				BplusTree tree = db.getTableTreeByName(tableName);
-				tree.Insert(value);
+				if(tree != null)
+				{
+					tree.Insert(value);
+				}else{
+					System.out.println("数据库中没有该表！");
+				}
 			}
 			break;
 		case 21:
