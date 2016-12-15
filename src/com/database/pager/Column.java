@@ -21,7 +21,7 @@ public class Column {
         return type;
     }
 
-    public void setType(byte type) {
+    public void setType(byte ty7pe) {
         this.type = type;
     }
 
