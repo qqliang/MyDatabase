@@ -3,10 +3,8 @@ package com.database.global;
 import com.database.myBplusTree.BplusNode;
 import com.database.myBplusTree.BplusTree;
 import com.database.pager.*;
-import com.database.parse.CRUD;
 import com.database.parse.parser;
 import com.database.queryExecute.Execute;
-import com.sun.xml.internal.ws.api.wsdl.parser.XMLEntityResolver;
 
 import java.io.File;
 import java.util.*;
@@ -185,7 +183,7 @@ public class Database {
 	 */
 	public void exeSQL(String sql){
 		String result[] = parser.parser(sql);
-		if(result[0] != null )
+		if(result[0] != "ERROR" )
 		{
 			Execute execute = new Execute(this,pager);
 			execute.queryDo(result,sql);
