@@ -71,8 +71,10 @@ public class Pager {
 //		pCache.printStatus();
 	}
 
+	/**
+	 * 	提交一个事务，将缓存中的数据写入磁盘
+	 */
 	public void commit(){
-
 	}
 	/**
 	 * 读取指定页号对应的页面
@@ -87,6 +89,13 @@ public class Pager {
 		page = loadPage(pgno, page);
 		return page;
 	}
+	public Page aquireNewPage(int pgno){
+		Page page = this.pCache.fetch(pgno);
+
+		if(page.getOffset() != SpaceAllocation.PAGE_SIZE)
+			return null;
+		return page;
+	}
 	/**
 	 * 读取指定页面中的数据
 	 * @param pgno 要读取的页号
@@ -99,49 +108,45 @@ public class Pager {
 		Map.Entry<Integer,String> entry = null;			//返回的结果
 		Page page = aquirePage(pgno);
 		byte[] data = page.getData();
-//		if(page.getPageType() == PageType.TABLE_LEAF){
-			int offset = page.getOffset();
-			if(offset == SpaceAllocation.PAGE_SIZE)
-				return null;
-			int szHdr = Utils.loadIntFromBytes(data, offset+4);
-			int skip = szHdr;
-			int[] types = new int[szHdr - SpaceAllocation.RECORD_HEADER];
-			for(int col = 0 ; col< szHdr - SpaceAllocation.RECORD_HEADER; col++){
-				switch (data[offset + SpaceAllocation.RECORD_HEADER + col]){
-					case DataType.INTEGER:
-						skip += 4;
-						types[col] = DataType.INTEGER;
-						break;
-					case DataType.LONG:
-						skip += 8;
-						types[col] = DataType.LONG;
-						break;
-					case DataType.TINY_INT:
-						skip += 1;
-						types[col] = DataType.TINY_INT;
-						break;
-					case DataType.SMALL_INT:
-						skip += 2;
-						types[col] = DataType.SMALL_INT;
-						break;
-					case DataType.TEXT:
-						skip += 50;
-						types[col] = DataType.TEXT;
-						break;
-				}
-			}
-
-			for(; offset < page.getSize(); offset += skip){
-				if(Utils.loadIntFromBytes(data, offset) == rowid){
-					List<String> cols = null;
-					entry = loadEntryFromBytes(data, szHdr, types, offset);
+		int offset = page.getOffset();
+		if(offset == SpaceAllocation.PAGE_SIZE)
+			return null;
+		int szHdr = Utils.loadIntFromBytes(data, offset+4);
+		int skip = szHdr;
+		int[] types = new int[szHdr - SpaceAllocation.RECORD_HEADER];
+		for(int col = 0 ; col< szHdr - SpaceAllocation.RECORD_HEADER; col++){
+			switch (data[offset + SpaceAllocation.RECORD_HEADER + col]){
+				case DataType.INTEGER:
+					skip += 4;
+					types[col] = DataType.INTEGER;
 					break;
-				}
+				case DataType.LONG:
+					skip += 8;
+					types[col] = DataType.LONG;
+					break;
+				case DataType.TINY_INT:
+					skip += 1;
+					types[col] = DataType.TINY_INT;
+					break;
+				case DataType.SMALL_INT:
+					skip += 2;
+					types[col] = DataType.SMALL_INT;
+					break;
+				case DataType.TEXT:
+					skip += 50;
+					types[col] = DataType.TEXT;
+					break;
 			}
-			return entry;
-//		}else{
-//			return entry;
-//		}
+		}
+
+		for(; offset < page.getSize(); offset += skip){
+			if(Utils.loadIntFromBytes(data, offset) == rowid){
+				List<String> cols = null;
+				entry = loadEntryFromBytes(data, szHdr, types, offset);
+				break;
+			}
+		}
+		return entry;
 	}
 	/**
 	 * 读取指定页面中的数据返回记录
@@ -359,7 +364,7 @@ public class Pager {
 	 */
 	public Page newPage(){
 //		Page page = aquirePage(this.mxPgno+1);
-		Page page = new Page();
+		Page page = aquirePage(this.mxPgno + 1);
 		page.setPgno(this.mxPgno+1);
 		this.mxPgno ++;
 		return page;
@@ -367,24 +372,4 @@ public class Pager {
 	public void freePage(int pgno){
 		pCache.free(pgno);
 	}
-//	private void resizePages()
-//	{
-//		int oldPageNum = this.pageNum;
-//		Page[] newPages = new Page[oldPageNum * 2];
-//		for(int i = 0; i< oldPageNum; i++){
-//			newPages[i] = this.pages[i];
-//		}
-//		for(int i = oldPageNum; i < newPages.length; i++){
-//			Page page = new Page();
-//			page.setData(new byte[SpaceAllocation.PAGE_SIZE]);
-//			page.setPgno(i);
-//			page.setSectorSize(SpaceAllocation.SECTOR_SIZE);
-//			page.setSize(SpaceAllocation.PAGE_SIZE);
-//			page.setOffset(SpaceAllocation.PAGE_SIZE);
-//			newPages[i] = page;
-//		}
-//
-//		this.pages = newPages;
-//		this.pageNum = newPages.length;
-//	}
 }
