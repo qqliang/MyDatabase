@@ -3,6 +3,7 @@ package com.database.main;
 import com.database.global.Database;
 import com.database.myBplusTree.BplusTree;
 import com.database.pager.Pager;
+import com.database.pager.TableSchema;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.List;
 public class TestBplusTree {
     public static void main(String args[]){
 
-        BplusTree tree = new BplusTree(3, new Database());
+        BplusTree tree = new BplusTree(3, new Database(),new TableSchema());
 
         List<String> list = new ArrayList<>();
         list.add("1,lqq,87");list.add("2,zy,56");list.add("3,hh,46");list.add("4,cy,87");

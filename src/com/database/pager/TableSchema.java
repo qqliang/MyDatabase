@@ -184,42 +184,6 @@ public class TableSchema {
         }
         return data;
     }
-    public static TableSchema getTableSchema() {
-        TableSchema record = new TableSchema();
-        List<Column> cols = new ArrayList<Column>();
-        Column idCol =  new Column();
-        idCol.setName("id");
-        idCol.setType(DataType.INTEGER);
-        idCol.setConstraint(ColumnConstraint.NONE);
-
-        Column nameCol =  new Column();
-        nameCol.setName("name");
-        nameCol.setType(DataType.TEXT);
-        nameCol.setConstraint(ColumnConstraint.NONE);
-
-        Column ageCol =  new Column();
-        ageCol.setName("age");
-        ageCol.setType(DataType.TINY_INT);
-        ageCol.setConstraint(ColumnConstraint.NONE);
-
-        cols.add(idCol);
-        cols.add(nameCol);
-        cols.add(ageCol);
-        record.setColumns(cols);
-        return record;
-    }
-    public static TableSchema getInternalSchema() {
-        TableSchema record = new TableSchema();
-        List<Column> cols = new ArrayList<Column>();
-        Column idCol =  new Column();
-        idCol.setName("pgno");
-        idCol.setType(DataType.INTEGER);
-        idCol.setConstraint(ColumnConstraint.NONE);
-
-        cols.add(idCol);
-        record.setColumns(cols);
-        return record;
-    }
     public static TableSchema getTreeSchema() {
         TableSchema record = new TableSchema();
         List<Column> cols = new ArrayList<Column>();
@@ -232,12 +196,55 @@ public class TableSchema {
         cols.add(idCol);
         Column idCol1 =  new Column();
 
-        idCol1.setName("sql");
-        idCol1.setType(DataType.TEXT);
-        idCol1.setConstraint(ColumnConstraint.NONE);
+        idCol.setName("sql");
+        idCol.setType(DataType.TEXT);
+        idCol.setConstraint(ColumnConstraint.NONE);
 
-        cols.add(idCol1);
+        cols.add(idCol);
         record.setColumns(cols);
         return record;
+    }
+    /* 解析表结构 */
+    public static TableSchema buildTableSchema(String sql){
+        TableSchema schema = new TableSchema();
+        List<Column> cols = new ArrayList<Column>();
+
+        String col[] = sql.split(",");
+        for(int i=0;i<col.length;i++){
+            Column idCol = new Column();
+            String param[] = col[i].trim().split(" ");
+            //添加列名
+            idCol.setName(param[0]);
+            //添加约束
+            switch (param[1]){
+                case "int":
+                    idCol.setType(DataType.INTEGER);
+                    break;
+                case "char":
+                    idCol.setType(DataType.TEXT);
+                    break;
+                case "long":
+                    idCol.setType(DataType.LONG);
+                    break;
+                default:
+                    System.out.println("数据类型错误！"+param[1]);
+            }
+            //添加约束
+            if(param.length >2 ){
+                switch (param[2]){
+                    case "primary key":
+                        idCol.setConstraint(ColumnConstraint.PRIMARY_KEY);
+                        break;
+                    case "not null":
+                        idCol.setConstraint(ColumnConstraint.NOT_NULL);
+                }
+            }else{
+                idCol.setConstraint(ColumnConstraint.NONE);
+            }
+            cols.add(idCol);
+        }
+
+        schema.setColumns(cols);
+        return schema;
     }
 }

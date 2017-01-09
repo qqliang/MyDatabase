@@ -20,19 +20,21 @@ package com.database.myBplusTree;
  */
 import com.database.global.Database;
 import com.database.global.PageType;
+import com.database.pager.TableSchema;
 
 import java.util.List;
 
 public class BplusTree{
 
     Database db ;               //数据库对象
+    TableSchema schema;         //表结构
 
     protected BplusNode root;   //根节点
     protected int order;        //树阶，M值
     protected BplusNode head;   //头指针
     protected int height = 0;   //树高
 
-    private static int maxRowid = 0;      //最大行号
+    private int maxRowid = 0;      //最大行号
 
     /**
      *构造函数
@@ -40,14 +42,15 @@ public class BplusTree{
      * 2、创建根节点
      * 3、树的head指针指向根节点
      */
-    public BplusTree(int order,Database db) {
+    public BplusTree(int order,Database db, TableSchema schema) {
         /* 创建一个新的B+树 */
         if (order < 3) {
             System.out.print("树阶必须大于2！");
             System.exit(0);
         }
         this.order = order;
-        root = new BplusNode(db.getPager(), PageType.TABLE_LEAF);
+        this.schema = schema;
+        root = new BplusNode(db.getPager(), PageType.TABLE_LEAF, schema);
         root.page.setOrder((byte)order);
         root.page.setMaxRowID(0);			//设置目前最大rowid为0
         this.maxRowid = 0;
@@ -55,7 +58,7 @@ public class BplusTree{
         root.page.setHead(head.page.getPgno());
         this.db = db;
     }
-    public BplusTree(int order,Database db,BplusNode root,BplusNode head) {
+    public BplusTree(int order,Database db,BplusNode root,BplusNode head, TableSchema schema) {
         /* 从根节点中读取B+树，并构建 */
         if (order < 3) {
             System.out.print("树阶必须大于2！");
@@ -64,6 +67,8 @@ public class BplusTree{
         this.order = order;
         this.root = root;
         this.head = head;
+        this.schema = schema;
+        this.maxRowid = root.page.getMaxRowID();
         this.db = db;
     }
 
@@ -100,8 +105,9 @@ public class BplusTree{
     }
 
     /* 获取rowid */
-    public static int getRowid(){
+    public int getRowid(){
         maxRowid++;
+        this.root.page.setMaxRowID(maxRowid);
         return maxRowid;
     }
 
@@ -148,7 +154,7 @@ public class BplusTree{
      */
     public List<String> SelectByOther(String param, String value){
         List<String> results = null;
-        BplusNode tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()));
+        BplusNode tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()), schema);
         while(tempNode != null){
             for(int i=0;i < tempNode.entries.size();i++){
                 String tempStr = tempNode.entries.get(i).getValue();
@@ -157,7 +163,7 @@ public class BplusTree{
                     results.add(tempStr);
                 }
             }// end for
-            tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()));
+            tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()), schema);
         }// end while
         return results;
     }
@@ -170,7 +176,7 @@ public class BplusTree{
      */
     public void Insert(String value) {
         System.out.println("开始插入!");
-        insertOrUpdate(BplusTree.getRowid(), value);
+        insertOrUpdate(getRowid(), value);
     }
 
 }

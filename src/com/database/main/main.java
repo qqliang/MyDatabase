@@ -17,18 +17,19 @@ public class main {
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        int rc = db.openDB("testDB");
-        if(rc==0){
-            System.out.println("数据库不存在");
-            return;
-        }
+//        int rc = db.openDB("testDB");
+//        if(rc==0){
+//            System.out.println("数据库不存在");
+//            return;
+//        }
         try {
             System.out.println("请输入SQL语句");
             sql = br.readLine();
-            while ( sql != "quit"){
+            while ( !sql.equals("quit")){
                 db.exeSQL(sql);
                 sql = br.readLine();
             }
+            System.out.println("已退出！");
         }catch (IOException e){
             e.printStackTrace();
         }
