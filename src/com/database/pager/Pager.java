@@ -365,7 +365,7 @@ public class Pager {
 	 */
 	public Page newPage(){
 //		Page page = aquirePage(this.mxPgno+1);
-		Page page = aquirePage(this.mxPgno + 1);
+		Page page = new Page();
 		page.setPgno(this.mxPgno+1);
 		this.mxPgno ++;
 		return page;

@@ -120,16 +120,15 @@ public class Page {
         if(this.pgno == 1)
             return ;
 
-
-        if(head == 1){
-            /**
-             * 有待补充
-             */
-        }
-        if(head > 1){
+//        if(head == 1){
+//            /**
+//             * 有待补充
+//             */
+//        }
+//        if(head > 1){
             this.head = head;
             Utils.fillInt(this.head,this.data,Position.HEAD_IN_BPLUS_ROOT);
-        }
+//        }
     }
 
     public int getpPrev() {
@@ -144,15 +143,15 @@ public class Page {
         init();
     }
     public void setpPrev(int pPrev) {
-        if(this.pgno == 1){
-            /**
-             * 有待补充
-             */
-        }
-        if(this.pgno > 1){
+//        if(this.pgno == 1){
+//            /**
+//             * 有待补充
+//             */
+//        }
+//        if(this.pgno > 1){
             this.pPrev = pPrev;
             Utils.fillInt(this.pPrev,this.data,Position.PREV_PAGE_IN_PAGE);
-        }
+//        }
     }
 
     public int getpNext() {
@@ -160,15 +159,15 @@ public class Page {
     }
 
     public void setpNext(int pNext) {
-        if(this.pgno == 1){
-            /**
-             * 有待补充
-             */
-        }
-        if(this.pgno > 1){
+//        if(this.pgno == 1){
+//            /**
+//             * 有待补充
+//             */
+//        }
+//        if(this.pgno > 1){
             this.pNext = pNext;
             Utils.fillInt(this.pNext,this.data,Position.NEXT_PAGE_IN_PAGE);
-        }
+//        }
     }
 
     @Override
