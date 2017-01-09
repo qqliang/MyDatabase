@@ -363,13 +363,13 @@ public class Pager {
 	 * 分配一个全新的页面给用户
 	 * @return
 	 */
-	public Page newPage(){
-//		Page page = aquirePage(this.mxPgno+1);
-		Page page = new Page();
-		page.setPgno(this.mxPgno+1);
-		this.mxPgno ++;
-		return page;
-	}
+//	public Page newPage(){
+////		Page page = aquirePage(this.mxPgno+1);
+//		Page page = new Page();
+//		page.setPgno(this.mxPgno+1);
+//		this.mxPgno ++;
+//		return page;
+//	}
 	public void freePage(int pgno){
 		pCache.free(pgno);
 	}

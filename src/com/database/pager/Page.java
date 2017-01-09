@@ -89,15 +89,15 @@ public class Page {
 //        if(pParent < 2)
 //            return ;
 
-        if(this.pParent == 1){
-            /**
-             * 有待补充
-             */
-        }
-        if(this.pParent > 1){
+//        if(this.pParent == 1){
+//            /**
+//             * 有待补充
+//             */
+//        }
+//        if(this.pParent > 1){
             this.pParent = pParent;
             Utils.fillInt(this.pParent,this.data,Position.PARENT_PAGE_IN_PAGE);
-        }
+//        }
     }
 
     public int getTableCount() {
