@@ -251,11 +251,11 @@ public class Page {
     }
 
     public void setOverflowPgno(int overflowPgno) {
-        if(overflowPgno < 2 && this.overflowPgno == 0)
-        {
-            overflowPgno = 0;
-            return ;
-        }
+//        if(overflowPgno < 2 && this.overflowPgno == 0)
+//        {
+//            overflowPgno = 0;
+//            return ;
+//        }
         this.overflowPgno = overflowPgno;
         Utils.fillInt(this.overflowPgno,this.data,Position.OVERFLOWPGNO_IN_PAGE);
     }
