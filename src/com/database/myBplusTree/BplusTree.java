@@ -138,8 +138,7 @@ public class BplusTree{
     /**
      * 根据rowid查询
      */
-    public String SelectByKey(String value) {
-        Integer key = Integer.parseUnsignedInt(value);
+    public String SelectByKey(Integer key) {
         System.out.println("开始查询！");
         String result = get(key);
         if (result == null) {

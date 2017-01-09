@@ -177,15 +177,29 @@ public class TableSchema {
         idCol.setName("tableName");
         idCol.setType(DataType.TEXT);
         idCol.setConstraint(ColumnConstraint.NONE);
-
         cols.add(idCol);
+
         Column idCol1 =  new Column();
 
-        idCol.setName("sql");
-        idCol.setType(DataType.TEXT);
-        idCol.setConstraint(ColumnConstraint.NONE);
+        idCol1.setName("sql");
+        idCol1.setType(DataType.TEXT);
+        idCol1.setConstraint(ColumnConstraint.NONE);
+        cols.add(idCol1);
 
+        record.setColumns(cols);
+        return record;
+    }
+    /* B树根节点或内部节点结构 */
+    public static TableSchema getTreeInternalSchema() {
+        TableSchema record = new TableSchema();
+        List<Column> cols = new ArrayList<Column>();
+        Column idCol =  new Column();
+
+        idCol.setName("pgno");
+        idCol.setType(DataType.INTEGER);
+        idCol.setConstraint(ColumnConstraint.NONE);
         cols.add(idCol);
+
         record.setColumns(cols);
         return record;
     }

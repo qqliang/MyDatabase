@@ -9,69 +9,69 @@ import com.database.pager.Pager;
 import com.database.pager.TableSchema;
 
 public class Execute {
-	private static String path = "D:/db";//¸ùÄ¿Â¼
+	private static String path = "D:/db";//æ ¹ç›®å½•
 	private Database db;
 	private Pager pager;
 
-	//¹¹Ôìº¯Êı
+	//æ„é€ å‡½æ•°
 	public Execute (Database db,Pager pager){
 		this.db = db;
 		this.pager = pager;
 	}
 
-	//²éÑ¯Ö´ĞĞ
+	//æŸ¥è¯¢æ‰§è¡Œ
 	public void queryDo(String[] param, String sql){
 		/**
-		 * param[0]: Ö´ĞĞ²Ù×÷£»
-		 * 		11 ¡ª¡ª ´´½¨Êı¾İ¿â
-		 * 		10 ¡ª¡ª ´´½¨±í
-		 * 		22 ¡ª¡ª ²åÈëÊı¾İ insert
-		 * 		21 ¡ª¡ª ²éÑ¯Êı¾İ select
-		 * 		23 ¡ª¡ª É¾³ıÊı¾İ delete
-		 * 	paramp[1]: Óë²Ù×÷Ïà¶ÔÓ¦µÄ²ÎÊı
+		 * param[0]: æ‰§è¡Œæ“ä½œï¼›
+		 * 		11 â€”â€” åˆ›å»ºæ•°æ®åº“
+		 * 		10 â€”â€” åˆ›å»ºè¡¨
+		 * 		22 â€”â€” æ’å…¥æ•°æ® insert
+		 * 		21 â€”â€” æŸ¥è¯¢æ•°æ® select
+		 * 		23 â€”â€” åˆ é™¤æ•°æ® delete
+		 * 	paramp[1]: ä¸æ“ä½œç›¸å¯¹åº”çš„å‚æ•°
 		 */
 		int stat=Integer.parseInt(param[0]);
 		
 		switch(stat){
 		case 11:
 			/**
-			 * ´´½¨Êı¾İ¿â
-			 * 	1¡¢ÔÚÖ¸¶¨Â·¾¶ÏÂÃæ´´½¨Êı¾İ¿âÎÄ¼ş(ÎÄ¼şÃûÓëÊı¾İ¿âÃûÒ»ÖÂ)
-			 * 	2¡¢ÔÚpage1ÖĞÌîĞ´Êı¾İ¿âheader
-			 * 	3¡¢´ò¿ª¸ÃÊı¾İ¿â
+			 * åˆ›å»ºæ•°æ®åº“
+			 * 	1ã€åœ¨æŒ‡å®šè·¯å¾„ä¸‹é¢åˆ›å»ºæ•°æ®åº“æ–‡ä»¶(æ–‡ä»¶åä¸æ•°æ®åº“åä¸€è‡´)
+			 * 	2ã€åœ¨page1ä¸­å¡«å†™æ•°æ®åº“header
+			 * 	3ã€æ‰“å¼€è¯¥æ•°æ®åº“
 			 */
 			try{
 				File file = new File(path + "/" +param[1]);
 				if (!file.exists()) {
                     file.createNewFile();
 					db.setDBFile(file);
-					/* µ÷ÓÃpager¶ÔÏó´´½¨page1 */
+					/* è°ƒç”¨pagerå¯¹è±¡åˆ›å»ºpage1 */
 					Page page1 = pager.newPage();
-					page1.setTableCount(0);			//ÉèÖÃÄ¿Ç°±íµÄ¼ÆÊıÎª0
+					page1.setTableCount(0);			//è®¾ç½®ç›®å‰è¡¨çš„è®¡æ•°ä¸º0
 					pager.updateHeader(page1);
 					db.setPage1(page1);
-					//´ò¿ª¸ÃÊı¾İ¿â
+					//æ‰“å¼€è¯¥æ•°æ®åº“
 					if(db.getStat() == 0){
-						db.setDBName(param[1]);		//ÉèÖÃÊı¾İ¿âÃû³Æ
-						db.setStat(1);				//ÉèÖÃÊı¾İ¿â×´Ì¬
+						db.setDBName(param[1]);		//è®¾ç½®æ•°æ®åº“åç§°
+						db.setStat(1);				//è®¾ç½®æ•°æ®åº“çŠ¶æ€
 					}
-					System.out.println("Êı¾İ¿â´´½¨³É¹¦£¡");
+					System.out.println("æ•°æ®åº“åˆ›å»ºæˆåŠŸï¼");
 				}else{
-					System.out.println("´´½¨µÄÊı¾İ¿âÃû×ÖÒÔ´æÔÚ£¡");
+					System.out.println("åˆ›å»ºçš„æ•°æ®åº“åå­—ä»¥å­˜åœ¨ï¼");
 				}
 			}catch(Exception e){
-				System.out.println("´´½¨Êı¾İ¿â³ö´í!");
+				System.out.println("åˆ›å»ºæ•°æ®åº“å‡ºé”™!");
 				e.printStackTrace();
 			}
 			break;
 		case 10:
 			/**
-			 * ´´½¨±í
-			 * 1¡¢´´½¨¸Ã±íµÄB+Ê÷
-			 * 2¡¢Ïòpage1ÖĞÌîĞ´±íÓëB+Ê÷µÄ¶ÔÓ¦¹ØÏµ
+			 * åˆ›å»ºè¡¨
+			 * 1ã€åˆ›å»ºè¯¥è¡¨çš„B+æ ‘
+			 * 2ã€å‘page1ä¸­å¡«å†™è¡¨ä¸B+æ ‘çš„å¯¹åº”å…³ç³»
 			 */
 			if(db.getStat() != 1){
-				System.out.println("Î´´ò¿ªÊı¾İ¿â£¬ÇëÏÈ´ò¿ªÊı¾İ¿â!");
+				System.out.println("æœªæ‰“å¼€æ•°æ®åº“ï¼Œè¯·å…ˆæ‰“å¼€æ•°æ®åº“!");
 			}else{
 				TableSchema schema = TableSchema.buildTableSchema(param[2].substring(param[2].indexOf('[')+1,param[2].indexOf(']')));
 				BplusTree tree = new BplusTree(3,db,schema);
@@ -80,14 +80,14 @@ public class Execute {
 			break;
 		case 22:
 			/**
-			 * insert²Ù×÷
-			 * 1¡¢ÌáÈ¡²ÎÊıÖĞµÄvalueÖµ
-			 * 2¡¢´ÓdbÖĞÕÒµ½¸Ã±íµÄB+Ê÷
-			 * 3¡¢µ÷ÓÃ²åÈëº¯Êı
+			 * insertæ“ä½œ
+			 * 1ã€æå–å‚æ•°ä¸­çš„valueå€¼
+			 * 2ã€ä»dbä¸­æ‰¾åˆ°è¯¥è¡¨çš„B+æ ‘
+			 * 3ã€è°ƒç”¨æ’å…¥å‡½æ•°
 			 */
 
 			if(db.getStat()!=1){
-				System.out.println("Î´´ò¿ªÊı¾İ¿â£¬ÇëÏÈ´ò¿ªÊı¾İ¿â!");
+				System.out.println("æœªæ‰“å¼€æ•°æ®åº“ï¼Œè¯·å…ˆæ‰“å¼€æ•°æ®åº“!");
 			}else{
 				String value = param[2].substring(param[2].indexOf('(')+1,param[2].indexOf(')'));
 				String tableName = param[1];
@@ -96,29 +96,29 @@ public class Execute {
 				{
 					tree.Insert(value);
 				}else{
-					System.out.println("Êı¾İ¿âÖĞÃ»ÓĞ¸Ã±í£¡");
+					System.out.println("æ•°æ®åº“ä¸­æ²¡æœ‰è¯¥è¡¨ï¼");
 				}
 			}
 			break;
 		case 21:
 			/**
-			 * select²Ù×÷
-			 * 1¡¢»ñÈ¡Òª²éÑ¯µÄ×Ö¶Î¡¢±íÃû¡¢Ìõ¼ş
-			 * 2¡¢´ÓdbÖĞ»ñÈ¡¸Ã±íµÄB+Ê÷
-			 * 3¡¢
+			 * selectæ“ä½œ
+			 * 1ã€è·å–è¦æŸ¥è¯¢çš„å­—æ®µã€è¡¨åã€æ¡ä»¶
+			 * 2ã€ä»dbä¸­è·å–è¯¥è¡¨çš„B+æ ‘
+			 * 3ã€
 			 */
 			if(db.getStat() != 1){
-				System.out.println("Î´´ò¿ªÊı¾İ¿â£¬ÇëÏÈ´ò¿ªÊı¾İ¿â!");
+				System.out.println("æœªæ‰“å¼€æ•°æ®åº“ï¼Œè¯·å…ˆæ‰“å¼€æ•°æ®åº“!");
 			}else{
-				String selectParam = param[1];		//²éÑ¯×Ö¶Î
-				String value[] =param[3].split("=");//²éÑ¯Ìõ¼ş
-				String tableName = param[2];		//²éÑ¯±íÃû
+				String selectParam = param[1];		//æŸ¥è¯¢å­—æ®µ
+				String value[] =param[3].split("=");//æŸ¥è¯¢æ¡ä»¶
+				String tableName = param[2];		//æŸ¥è¯¢è¡¨å
 				BplusTree tree = db.getTableTreeByName(tableName);
 
 				List<String> results = null;
 				if(value[0].equals("id"))
 				{
-					String result = tree.SelectByKey(value[1]);
+					String result = tree.SelectByKey(Integer.parseInt(value[1]));
 					results.add(result);
 				}else{
 					results = tree.SelectByOther(value[0],value[1]);
@@ -126,7 +126,7 @@ public class Execute {
 			}
 			break;
 		case 23:
-			//delete²Ù×÷
+			//deleteæ“ä½œ
 			if(db.getStat() != 1){
 				System.out.println("database you are performing is closed,please confirm your databse is opend firstly!");
 			}else{

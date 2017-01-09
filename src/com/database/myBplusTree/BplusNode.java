@@ -163,6 +163,7 @@ public class BplusNode {
                 left.page.setpPrev(previous.page.getPgno());
             }else{
                 tree.setHead(left);
+                tree.root.page.setHead(left.page.getPgno());
             }
             if (page.getpNext() != 0) {
                 next = new BplusNode(pager, pager.aquirePage(page.getpNext()),schema);
@@ -240,6 +241,7 @@ public class BplusNode {
                 //如果是根节点
             }else {
                 page.setPageType(PageType.TABLE_ROOT);
+                this.schema = TableSchema.getTreeInternalSchema();
 
                 left.parent = this;
                 left.page.setpParent(page.getPgno());
@@ -255,7 +257,10 @@ public class BplusNode {
                         left.entries.get(0).getKey(),String.valueOf(left.page.getPgno())));
                 entries.add(new SimpleEntry<Integer, String>(
                         right.entries.get(0).getKey(),String.valueOf(right.page.getPgno())));
+
                 flushPage(entries,this);
+                flushPage(left.entries,left);
+                flushPage(right.entries,right);
             }
             return ;
         }
@@ -266,8 +271,10 @@ public class BplusNode {
          * 3、否则沿比key大的前一个子节点继续搜索
          */
         if (key.compareTo(entries.get(0).getKey()) < 0) {
+            loadChildren(this);
             children.get(0).insertOrUpdate(key, value, tree);
         }else if (key.compareTo(entries.get(entries.size()-1).getKey()) >= 0) {
+            loadChildren(this);
             children.get(children.size()-1).insertOrUpdate(key, value, tree);
         }else {
             int low = 0, high = entries.size() - 1, mid= 0;
@@ -596,6 +603,7 @@ public class BplusNode {
                     temp.page.setpNext(0);
                 }else {
                     tree.setHead(this);
+                    tree.root.page.setHead(this.page.getPgno());
                     previous.page.setpNext(0);
                     page.setpPrev(0);
                 }
