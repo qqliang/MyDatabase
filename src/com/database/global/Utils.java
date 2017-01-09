@@ -54,6 +54,52 @@ public class Utils {
 
         return bytes;
     }
+
+    /**
+     * 填充变长的整型值
+     * @param value 所要填充的整型值
+     * @param bytes
+     * @param start
+     * @return  该值实际长度,返回-1表示错误(值已经超出32bit整型范围)
+     */
+    public static int fillVarInt(int value, byte[] bytes, int start){
+        if(value > Integer.MAX_VALUE)
+            return -1;
+        //1B
+        if((value & ~0x7f) == 0){
+            bytes[start] = (byte)value;
+            return 1;
+        }
+        //2B
+        if( (value & ~0x3fff)==0 ){
+            bytes[start] = (byte)((value >> 7) | 0x80);
+            bytes[start + 1] = (byte)(value & 0x7f);
+            return 2;
+        }
+        //3B
+        if( (value & ~0x1fffff)==0 ){
+            bytes[start] = (byte)((value>>14) | 0x80);
+            bytes[start + 1] = (byte)((value>>7) | 0x80);
+            bytes[start + 2] = (byte)(value & 0x7f);
+            return 3;
+        }
+        //4B
+        if( (value & ~0x0fffffff) == 0 ){
+            bytes[start] = (byte)((value>>21) | 0x80);
+            bytes[start + 1] = (byte)((value>>14) | 0x80);
+            bytes[start + 2] = (byte)((value>>7) | 0x80);
+            bytes[start + 3] = (byte)(value & 0x7f);
+            return 4;
+        }else{
+            bytes[start] = (byte)((value>>28) | 0x80);
+            bytes[start + 1] = (byte)((value>>21) | 0x80);
+            bytes[start + 2] = (byte)((value>>14) | 0x80);
+            bytes[start + 3] = (byte)((value>>7) | 0x80);
+            bytes[start + 4] = (byte)(value & 0x7f);
+            return 5;
+
+        }
+    }
     public static byte[] fillLong(long value, byte[] bytes,int start)
     {
         if(bytes.length < start + 8 - 1)
@@ -93,7 +139,7 @@ public class Utils {
     }
 
     public static int loadIntFromBytes(byte[] data, int start){
-        assert(start + 4 > data.length);
+        assert(start + 4 < data.length);
 
         int intValue = 0;
         for(int i = 0; i< 4; i++){
@@ -101,6 +147,52 @@ public class Utils {
         }
 
         return intValue;
+    }
+
+    /**
+     * 加载变长int数据
+     * @param data
+     * @param start
+     * @return
+     */
+    public static int loadVarIntFromBytes(byte[] data, int start){
+        assert(start < data.length);
+
+        int intValue = 0;
+        // 1 B
+        if((data[start] & 0x80) == 0 ){
+            intValue = data[start];
+            return intValue;
+        }
+        //2 B
+        if((data[start + 1] & 0x80) == 0 ){
+            intValue |= ((data[start] & 0x7f) << 7) | data[1];
+            return intValue;
+        }
+        //3 B
+        if((data[start + 2] & 0x80) == 0 ){
+            intValue |= ((data[start] & 0x7f) << 14)
+                        | ((data[start + 1] & 0x7f) << 7)
+                        | data[start + 2];
+            return intValue;
+        }
+        //4B
+        if((data[start + 3] & 0x80) == 0 ){
+            for(int i = 0; i< 4; i++){
+                intValue |= (data[start+i]&0x7F) << 7*(4 - 1 - i) ;
+            }
+            return intValue;
+        }
+        //5B  need modify
+        if((data[start + 4] & 0x80) == 0 ){
+            for(int i = 0; i< 5; i++){
+                intValue |= (data[start+i]&0x7F) << 7*(5 - 1 - i) ;
+            }
+            return intValue;
+        }else{
+            System.out.println("ERROR: Utils.loadVarIntFromBytes()");
+            return -1;
+        }
     }
 
     public static short loadShortFromBytes(byte[] data, int start){
