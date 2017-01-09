@@ -11,10 +11,11 @@ import java.util.Random;
  */
 public class TestUtils {
     public static void main(String[] args){
-        testInt();
-        testLong();
-        testString();
-        testShort();
+//        testInt();
+//        testLong();
+//        testString();
+//        testShort();
+        testVarInt();
     }
     public static void testShort(){
         int max = 2 << 15 -10;
@@ -54,6 +55,22 @@ public class TestUtils {
         Utils.fillString(old,data,0);
         String value = Utils.loadStrFromBytes(data,0,new String("zhouyu").length());
         System.out.println("String value:"+(old.equals(value)));
+    }
+
+    /**
+     * 测试对变长数据的存储于读取功能
+     */
+    public static void testVarInt(){
+
+        byte[] data = new byte[5];
+        int oldValue = 0xffffffff;
+        System.out.println("byte value:"+Integer.toBinaryString(oldValue));
+        int len = Utils.fillVarInt(oldValue, data, 0);
+        System.out.println("len:"+ len);
+        int newValue = Utils.loadVarIntFromBytes(data, 0);
+        System.out.println("data:"+Arrays.toString(data));
+        System.out.println("old == new:"+ (oldValue==newValue));
+
     }
 
 }
