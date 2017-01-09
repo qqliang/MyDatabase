@@ -89,11 +89,12 @@ public class Pager {
 		page = loadPage(pgno, page);
 		return page;
 	}
-	public Page aquireNewPage(int pgno){
-		Page page = this.pCache.fetch(pgno);
+	public Page aquireNewPage(){
+		Page page = this.pCache.fetch(this.mxPgno + 1);
 
 		if(page.getOffset() != SpaceAllocation.PAGE_SIZE)
 			return null;
+		this.mxPgno ++;
 		return page;
 	}
 	/**
