@@ -117,14 +117,29 @@ public class TableSchema {
         return this.columns.size();
     }
 
+    /**
+     *  将参数转换为字节表示传给Pager来将二进制数据写入页面中
+     * @param rowid 与该记录对应的rowid
+     * @param record 一条记录。格式：column1， column2， column3...
+     * @return 一条记录的二进制表示
+     */
     public byte[] getBytes(int rowid, String record){
         if(record == null || record.isEmpty())
             return null;
         return getBytes(rowid, Arrays.asList(record.split(",")));
     }
-    private byte[] getBytes(int rowid, List<String> record)
+
+    /**
+     *
+     * @param rowid 与该记录对应的rowid
+     * @param record 一条记录的所有列构成的列表
+     * @return 一条记录的二进制表示
+     */
+    public byte[] getBytes(int rowid, List<String> record)
     {
-        if(columns == null || columns.size() == 0)
+        if(this.columns == null || this.columns.size() == 0)
+            return null;
+        if(record == null || record.size() != this.columns.size())
             return null;
 
         int colNum = getColNum();
