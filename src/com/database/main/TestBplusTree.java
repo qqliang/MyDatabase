@@ -29,8 +29,11 @@ public class TestBplusTree {
         BplusTree tree = db.getTableTreeByName("test");
 
         List<String> list = new ArrayList<>();
-        list.add("1,lqq,87");list.add("2,zy,56");list.add("3,hh,46");list.add("4,cy,87");
-//        list.add("5,cq,72");list.add("6,gf,45");list.add("7,dg,76");list.add("8,hg,54");
+//        list.add("1,lqq");list.add("2,zy");
+//        list.add("3,hh");
+//        list.add("4,cy");
+//        list.add("5,cq");
+//        list.add("6,gf");list.add("7,dg");list.add("8,hg");
 
 //        List<String> resultList = new ArrayList<>();
 //        for(int i=0;i<list.size();i++){

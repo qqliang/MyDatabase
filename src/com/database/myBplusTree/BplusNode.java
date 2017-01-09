@@ -35,7 +35,7 @@ public class BplusNode {
     public BplusNode(Pager pager, byte type, TableSchema schema) {
         /* 构造一个新的节点，向pager请求分配一个新的页面，并设置页面类型 */
         this.pager = pager;
-        this.page = pager.newPage();
+        this.page = pager.aquireNewPage();
         this.page.setPageType(type);
         this.schema = schema;
         this.children = new ArrayList<>();

@@ -46,7 +46,7 @@ public class Execute {
                     file.createNewFile();
 					db.setDBFile(file);
 					/* 调用pager对象创建page1 */
-					Page page1 = pager.newPage();
+					Page page1 = pager.aquireNewPage();
 					page1.setTableCount(0);			//设置目前表的计数为0
 					pager.updateHeader(page1);
 					db.setPage1(page1);

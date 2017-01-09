@@ -158,9 +158,15 @@ public class Database {
 					String sql = value[1].trim().replace("#",",");
 					String result[] = parser.parser(sql);
 					TableSchema schema = TableSchema.buildTableSchema(result[2].substring(result[2].indexOf('[')+1,result[2].indexOf(']')));
+					TableSchema rootSchema;
+					if(page.getPageType()==1){
+						rootSchema = TableSchema.getTreeInternalSchema();
+					}else{
+						rootSchema = schema;
+					}
 
 					//构建B+树
-					BplusNode root = new BplusNode(pager, page, schema);
+					BplusNode root = new BplusNode(pager, page, rootSchema);
 					BplusNode head = new BplusNode(pager,pager.aquirePage(page.getHead()), schema);
 					BplusTree tree = new BplusTree(page.getOrder(),this,root,head, schema);
 
