@@ -116,6 +116,10 @@ public class Execute {
 			}else{
 				/* 查询字段 */
 				String selectParam = param[1];
+				List<String> selectStr = new ArrayList<>();
+				if( selectParam == "*" ){
+//					selectStr = "all";
+				}
 
 				/* 查询表名 */
 				String tableName = param[2];

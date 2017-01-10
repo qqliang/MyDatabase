@@ -120,6 +120,8 @@ public class BplusNode {
                 tempSchema = tree.root.schema;
             }
             BplusNode temp = new BplusNode(pager, page, tempSchema);
+            temp.parent = node;
+
             node.children.add(temp);
         }
     }
@@ -166,6 +168,8 @@ public class BplusNode {
 
                 left.previous = previous ;
                 left.page.setpPrev(previous.page.getPgno());
+
+                flushPage(previous.entries, previous);
             }else{
                 tree.setHead(left);
                 tree.root.page.setHead(left.page.getPgno());
@@ -179,6 +183,8 @@ public class BplusNode {
 
                 right.next = next;
                 right.page.setpNext(next.page.getPgno());
+
+                flushPage(next.entries, next);
             }
             left.next = right;
             left.page.setpNext(right.page.getPgno());
@@ -241,6 +247,9 @@ public class BplusNode {
 
                 //父节点插入或更新关键字
                 parent.updateInsert(tree);
+
+                flushPage(left.entries,left);
+                flushPage(right.entries,right);
 
                 page.setPageType((byte)0);
                 pager.freePage(page.getPgno());
