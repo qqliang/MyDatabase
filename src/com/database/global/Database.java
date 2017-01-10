@@ -157,7 +157,8 @@ public class Database {
 					//获取表结构
 					String sql = value[1].trim().replace("#",",");
 					String result[] = parser.parser(sql);
-					TableSchema schema = TableSchema.buildTableSchema(result[2].substring(result[2].indexOf('[')+1,result[2].indexOf(']')));
+					String schemaSQL = result[2].substring(result[2].indexOf('[')+1,result[2].indexOf(']'));
+					TableSchema schema = TableSchema.buildTableSchema(schemaSQL);
 					TableSchema rootSchema;
 					if(page.getPageType()==1){
 						rootSchema = TableSchema.getTreeInternalSchema();

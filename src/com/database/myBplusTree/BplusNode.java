@@ -3,10 +3,7 @@ package com.database.myBplusTree;
 /**
  * Created by Qing_L on 2016/11/23.
  */
-import com.database.global.ColumnConstraint;
-import com.database.global.DataType;
 import com.database.global.PageType;
-import com.database.pager.Column;
 import com.database.pager.Page;
 import com.database.pager.Pager;
 import com.database.pager.TableSchema;
@@ -19,7 +16,7 @@ public class BplusNode {
 
     Pager pager ;
     public Page page;
-    TableSchema schema;
+    public TableSchema schema;
 
     private BplusNode parent;         //父节点
     private BplusNode previous;       //叶子节点的前一个节点
@@ -60,7 +57,7 @@ public class BplusNode {
     /**
      * 根据关键字，查找数据（采用二分查找）
      */
-    public String get(Integer key) {
+    public String get(Integer key, BplusTree tree) {
         //如果是叶子节点
         if (page.getPageType() == PageType.TABLE_LEAF) {
             int low = 0, high = entries.size() - 1, mid;
@@ -86,11 +83,12 @@ public class BplusNode {
          * 3、如果key大于等于节点最右边的key，沿最后一个子节点继续搜索
          * 4、否则沿比key大的前一个子节点继续搜索
          */
-        loadChildren(this);
+        if(children.size() == 0)
+            loadChildren(this,tree);
         if (key.compareTo(entries.get(0).getKey()) < 0) {
-            return children.get(0).get(key);
+            return children.get(0).get(key,tree);
         }else if (key.compareTo(entries.get(entries.size()-1).getKey()) >= 0) {
-            return children.get(children.size()-1).get(key);
+            return children.get(children.size()-1).get(key,tree);
         }else {
             int low = 0, high = entries.size() - 1, mid= 0;
             int comp ;
@@ -98,23 +96,30 @@ public class BplusNode {
                 mid = (low + high) / 2;
                 comp = entries.get(mid).getKey().compareTo(key);
                 if (comp == 0) {
-                    return children.get(mid+1).get(key);
+                    return children.get(mid+1).get(key,tree);
                 } else if (comp < 0) {
                     low = mid + 1;
                 } else {
                     high = mid - 1;
                 }
             }
-            return children.get(low).get(key);
+            return children.get(low).get(key,tree);
         }
     }
 
     /* 加载子节点 */
-    public void loadChildren(BplusNode node){
+    public void loadChildren(BplusNode node, BplusTree tree){
         node.children.clear();
         for(int i=0;i<node.entries.size();i++){
             Integer pgno = Integer.parseInt(node.entries.get(i).getValue());
-            BplusNode temp = new BplusNode(pager,pager.aquirePage(pgno),schema);
+            Page page = pager.aquirePage(pgno);
+            TableSchema tempSchema;
+            if(page.getPageType()==3){
+                tempSchema = tree.head.schema;
+            }else{
+                tempSchema = tree.root.schema;
+            }
+            BplusNode temp = new BplusNode(pager, page, tempSchema);
             node.children.add(temp);
         }
     }
@@ -149,12 +154,12 @@ public class BplusNode {
              * 4、left的next指针指向right，right的previous指针指向left
              * 5、把当前节点的previous、next指针赋值为NULL
              */
-            BplusNode left = new BplusNode(pager,PageType.TABLE_LEAF,schema);
-            BplusNode right = new BplusNode(pager,PageType.TABLE_LEAF,schema);
+            BplusNode left = new BplusNode(pager, PageType.TABLE_LEAF, schema);
+            BplusNode right = new BplusNode(pager, PageType.TABLE_LEAF, schema);
 
             if (page.getpPrev() != 0){
                 if(previous == null)
-                    previous = new BplusNode(pager,pager.aquirePage(page.getpPrev()),schema);
+                    previous = new BplusNode(pager,pager.aquirePage(page.getpPrev()), schema);
 
                 previous.next = left;
                 previous.page.setpNext(left.page.getPgno());
@@ -166,7 +171,8 @@ public class BplusNode {
                 tree.root.page.setHead(left.page.getPgno());
             }
             if (page.getpNext() != 0) {
-                next = new BplusNode(pager, pager.aquirePage(page.getpNext()),schema);
+                if(next == null)
+                    next = new BplusNode(pager, pager.aquirePage(page.getpNext()),schema);
 
                 next.previous = right;
                 next.page.setpPrev(right.page.getPgno());
@@ -214,7 +220,7 @@ public class BplusNode {
                 //调整父子节点关系
                 if(parent == null){
                     parent = new BplusNode(pager,pager.aquirePage(page.getpParent()),schema);
-                    loadChildren(parent);
+                    loadChildren(parent,tree);
                 }
                 int index = parent.children.indexOf(this);
                 parent.children.remove(this);
@@ -238,7 +244,7 @@ public class BplusNode {
 
                 page.setPageType((byte)0);
                 pager.freePage(page.getPgno());
-                //如果是根节点
+
             }else {
                 page.setPageType(PageType.TABLE_ROOT);
                 this.schema = TableSchema.getTreeInternalSchema();
@@ -266,15 +272,16 @@ public class BplusNode {
         }
         /**
          * 如果不是叶子节点
-         * 1、如果key小于等于节点最左边的key，沿第一个子节点继续搜索
-         * 2、如果key大于节点最右边的key，沿最后一个子节点继续搜索
-         * 3、否则沿比key大的前一个子节点继续搜索
+         * 1、加载孩子节点
+         * 2、如果key小于等于节点最左边的key，沿第一个子节点继续搜索
+         * 3、如果key大于节点最右边的key，沿最后一个子节点继续搜索
+         * 4、否则沿比key大的前一个子节点继续搜索
          */
+        if(children.size() == 0)
+            loadChildren(this,tree);
         if (key.compareTo(entries.get(0).getKey()) < 0) {
-            loadChildren(this);
             children.get(0).insertOrUpdate(key, value, tree);
         }else if (key.compareTo(entries.get(entries.size()-1).getKey()) >= 0) {
-            loadChildren(this);
             children.get(children.size()-1).insertOrUpdate(key, value, tree);
         }else {
             int low = 0, high = entries.size() - 1, mid= 0;
@@ -326,8 +333,8 @@ public class BplusNode {
             right.entries.add(new SimpleEntry<Integer, String>(key, value));
         }
 
-        flushPage(left.entries,left);       /* 刷新左节点页面数据域 */
-        flushPage(right.entries,right);     /* 刷新右节点页面数据域 */
+//        flushPage(left.entries,left);       /* 刷新左节点页面数据域 */
+//        flushPage(right.entries,right);     /* 刷新右节点页面数据域 */
     }
 
     /** 插入节点后中间节点的更新 */
@@ -740,8 +747,8 @@ public class BplusNode {
             dataList.add(new AbstractMap.SimpleEntry<Integer,byte[]>(entries.get(i).getKey(),
                     node.schema.getBytes(entries.get(i).getKey(),entries.get(i).getValue())));
         }
-        pager.writeData(node.page.getPgno(),dataList);
         pager.updateHeader(node.page);
+        pager.writeData(node.page,dataList);
         pager.flush();
     }
 
