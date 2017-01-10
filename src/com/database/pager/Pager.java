@@ -59,17 +59,22 @@ public class Pager {
 		}
 	}
 
+//	/**
+//	 * 像指定页面中写入数据，即刷新整个页面数据
+//	 * @param pgno 要写入数据的页号
+//	 * @param data	要写入的数据，entry中的byte[]可以通过Record的getBytes方法可以简单得到
+//	 */
+//	public void writeData(int pgno, List<Map.Entry<Integer, byte[]>> data){
+//		Page page = aquirePage(pgno);
+//		page.fillData(data);
+//		pCache.makeDirty(page);
+////		pCache.printStatus();
+//	}
 	/**
 	 * 像指定页面中写入数据，即刷新整个页面数据
-	 * @param pgno 要写入数据的页号
+	 * @param page 要写入数据的页号
 	 * @param data	要写入的数据，entry中的byte[]可以通过Record的getBytes方法可以简单得到
 	 */
-	public void writeData(int pgno, List<Map.Entry<Integer, byte[]>> data){
-		Page page = aquirePage(pgno);
-		page.fillData(data);
-		pCache.makeDirty(page);
-//		pCache.printStatus();
-	}
 	public void writeData(Page page, List<Map.Entry<Integer, byte[]>> data){
 		page.fillData(data);
 		pCache.makeDirty(page);
