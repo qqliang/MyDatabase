@@ -107,27 +107,55 @@ public class Utils {
      * @param start
      * @return  该值实际长度,返回-1表示错误(值已经超出32bit整型范围)
      */
-    public static int fillVarLong(int value, byte[] bytes, int start){
+    public static int fillVarLong(long value, byte[] bytes, int start){
         if(value > Long.MAX_VALUE)
             return -1;
-        if(value <= Integer.MAX_VALUE)
-            return fillVarInt(value, bytes, start);
+        if(value <= Integer.MAX_VALUE || value>= Integer.MIN_VALUE)
+            return fillVarInt((int)value, bytes, start);
         //4B
         if( (value & ~0x0fffffff) == 0 ){
-            bytes[start] = (byte)((value>>21) | 0x80);
-            bytes[start + 1] = (byte)((value>>14) | 0x80);
-            bytes[start + 2] = (byte)((value>>7) | 0x80);
+            for(int i = 0 ; i < 3 ; i ++){
+                bytes[start + i ] = (byte)((value>> (4-1-i)*7 ) | 0x80);
+            }
             bytes[start + 3] = (byte)(value & 0x7f);
             return 4;
-        }else{
-            bytes[start] = (byte)((value>>28) | 0x80);
-            bytes[start + 1] = (byte)((value>>21) | 0x80);
-            bytes[start + 2] = (byte)((value>>14) | 0x80);
-            bytes[start + 3] = (byte)((value>>7) | 0x80);
+        }
+        if ((value & ~0x0fffffffffL) == 0){
+            for(int i = 0 ; i < 4 ; i ++){
+                bytes[start + i ] = (byte)((value>> (5-1-i)*7 ) | 0x80);
+            }
             bytes[start + 4] = (byte)(value & 0x7f);
             return 5;
-
         }
+        if ((value & ~0x0fffffffffffL) == 0){
+            for(int i = 0 ; i < 5 ; i ++){
+                bytes[start + i ] = (byte)((value>> (6-1-i)*7 ) | 0x80);
+            }
+            bytes[start + 5] = (byte)(value & 0x7f);
+            return 6;
+        }
+        //7B
+        if ((value & ~0x0fffffffffffffL) == 0){
+            for(int i = 0 ; i < 6 ; i ++){
+                bytes[start + i ] = (byte)((value>> (7-1-i)*7 ) | 0x80);
+            }
+            bytes[start + 6] = (byte)(value & 0x7f);
+            return 7;
+        }
+        if ((value & ~0x0fffffffffffffffL) == 0){
+            for(int i = 0 ; i < 7 ; i ++){
+                bytes[start + i ] = (byte)((value>> (8-1-i)*7 ) | 0x80);
+            }
+            bytes[start + 7] = (byte)(value & 0x7f);
+            return 8;
+        }else{
+            for(int i = 0 ; i < 8 ; i ++){
+                bytes[start + i ] = (byte)((value>> (9-1-i)*7 ) | 0x80);
+            }
+            bytes[start + 8] = (byte)(value & 0x7f);
+            return 9;
+        }
+
     }
     public static byte[] fillLong(long value, byte[] bytes,int start)
     {
@@ -266,12 +294,18 @@ public class Utils {
             return -1;
         }
     }
+    /**
+     * 加载变长long类型的整型数
+     * @param data
+     * @param start
+     * @return
+     */
     public static long loadLongFromBytes(byte[] data, int start){
         assert(start + 8 > data.length);
 
         int low = 0;
         int high = 0;
-        long longValue = 0;
+        long longValue = 0L;
         for(int i = 0; i< 8; i++){
             if(i<4) {
                 low |= (data[start + i] & 0xFF) << 8 * (8 - 1 - i);
@@ -281,6 +315,64 @@ public class Utils {
         }
         longValue = (long)low<<32&0xffffffff00000000l | ((long)high&0x00000000ffffffffl);
         return longValue;
+    }
+
+    /**
+     * @param data
+     * @param start
+     * @return
+     */
+    public static long loadVarLongFromBytes(byte[] data, int start){
+        assert(start < data.length);
+
+        Long longValue = 0L;
+        //poses 1-4 B
+        if((data[start] & 0x80) == 0
+                || (data[start + 1] & 0x80) == 0
+                || (data[start + 2] & 0x80) == 0
+                || (data[start + 3] & 0x80) == 0 ){
+            return loadVarIntFromBytes(data, start);
+        }
+        //poses 5 B
+        if((data[start + 4] & 0x80) == 0){
+            for(int i = 0; i< 5; i++){
+                longValue |= (data[start+i]&0x7F) << 7*(5 - 1 - i) ;
+            }
+            return longValue;
+        }
+        //poses 6 B
+        if((data[start + 5] & 0x80) == 0){
+            for(int i = 0; i< 6; i++){
+                longValue |= (data[start+i]&0x7F) << 7*(6 - 1 - i) ;
+            }
+            return longValue;
+        }
+        //poses 7 B
+        if((data[start + 6] & 0x80) == 0){
+            for(int i = 0; i< 7; i++){
+                longValue |= (data[start+i]&0x7F) << 7*(7 - 1 - i) ;
+            }
+            return longValue;
+        }
+        //poses 8 B
+        if((data[start + 7] & 0x80) == 0){
+            for(int i = 0; i< 8; i++){
+                longValue |= (data[start+i]&0x7F) << 7*(8 - 1 - i) ;
+            }
+            return longValue;
+        }
+        // 9B
+        if((data[start + 8] & 0x80) == 0){
+            for(int i = 0; i< 9; i++){
+                longValue |= (data[start+i]&0x7F) << 7*(9 - 1 - i) ;
+            }
+            return longValue;
+        }else{
+            for(int i = 0; i< 10; i++){
+                longValue |= (data[start+i]&0x7F) << 7*(10 - 1 - i) ;
+            }
+            return longValue;
+        }
     }
     public static String loadStrFromBytes(byte[] data, int start, int len){
         assert(start + len > data.length);

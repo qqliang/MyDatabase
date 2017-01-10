@@ -7,10 +7,10 @@ import java.util.*;
 public class PCache{
     private Page[] cacheSpace;
     private List<Page> dirtyPgs;
-    private List<Page> lruList;
+    private List<Page> lruList;              //size: nRecyclable
     private List<Page> freePgs;
     private List<List<Page>> apHash;        //维护使用页面的哈希表
-    private int nHash;
+    private int nHash;                      //default：10
     private int cacheSize ;                 //分配空间的大小
     private int nMaxPage;                   //最大页面
     private int nMinPage;                   //最小页面
@@ -236,7 +236,7 @@ public class PCache{
 //        this.pageNum = newPages.length;
     }
     /**
-     * 日后添加
+     * 紧缩缓存空间（日后添加）
      */
     public void shrink(){
 
@@ -248,7 +248,7 @@ public class PCache{
 
     }
     /**
-     * 日后添加
+     * 截断数据库文件（日后添加）
      */
     private void truncate(int limit){
 
