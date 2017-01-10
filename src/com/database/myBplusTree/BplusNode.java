@@ -85,7 +85,9 @@ public class BplusNode {
          */
         if(children.size() == 0)
             loadChildren(this,tree);
-        if (key.compareTo(entries.get(0).getKey()) < 0) {
+        int zzz = key.compareTo(entries.get(0).getKey());
+
+        if (key.compareTo(entries.get(1).getKey()) < 0) {
             return children.get(0).get(key,tree);
         }else if (key.compareTo(entries.get(entries.size()-1).getKey()) >= 0) {
             return children.get(children.size()-1).get(key,tree);

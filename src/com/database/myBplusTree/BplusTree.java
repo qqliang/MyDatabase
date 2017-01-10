@@ -159,7 +159,7 @@ public class BplusTree{
         BplusNode tempNode;
         if(head.page.getPgno() != 0){
 
-            tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getPgno()), schema);
+            tempNode = new BplusNode(db.getPager(),head.page, schema);
 
             while(tempNode != null){
                 for(int i=0;i < tempNode.entries.size();i++){
@@ -184,17 +184,23 @@ public class BplusTree{
         System.out.println("开始查询！");
 
         List<String> results = new ArrayList<>();
-        BplusNode tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()), schema);
-        while(tempNode != null){
-            for(int i=0;i < tempNode.entries.size();i++){
-                String tempStr = tempNode.entries.get(i).getValue();
-                String tempValue[] = tempStr.split(",");
-                if(tempValue[1].equals(value)){
-                    results.add(tempStr);
+        if(head.page.getPgno() != 0){
+            BplusNode tempNode = new BplusNode(db.getPager(),head.page, schema);
+            while(tempNode != null){
+                for(int i=0;i < tempNode.entries.size();i++){
+                    String tempStr = tempNode.entries.get(i).getValue();
+                    String tempValue[] = tempStr.split(",");
+                    if(tempValue[1].trim().equals(value.trim())){
+                        results.add(tempStr);
+                    }
+                }// end for
+                if(tempNode.page.getpNext() != 0){
+                    tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(tempNode.page.getpNext()), schema);
+                }else{
+                    tempNode = null;
                 }
-            }// end for
-            tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()), schema);
-        }// end while
+            }// end while
+        }
 
         return results;
     }

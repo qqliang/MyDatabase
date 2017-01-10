@@ -1,7 +1,9 @@
 package com.database.queryExecute;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.database.global.*;
 import com.database.myBplusTree.BplusTree;
@@ -114,20 +116,43 @@ public class Execute {
 			if(db.getStat() != 1){
 				System.out.println("未打开数据库，请先打开数据库!");
 			}else{
-				/* 查询字段 */
-				String selectParam = param[1];
-				List<String> selectStr = new ArrayList<>();
-				if( selectParam == "*" ){
-//					selectStr = "all";
-				}
-
 				/* 查询表名 */
 				String tableName = param[2];
 				BplusTree tree = db.getTableTreeByName(tableName);
 
+				/* 查询字段 */
+				String[] selectParam = param[1].substring(param[1].indexOf('[')+1,param[1].indexOf(']')).split(",");
+				List<String> selectStr = new ArrayList<>();
+
+				TableSchema schema = tree.getHead().schema;
+				List<Column> columns = schema.getColumns();
+
+				if( selectParam.length == 1 && selectParam[0].equals("*")){
+					//放入所有表的列
+					for(int i=0;i<columns.size();i++){
+						selectStr.add(columns.get(i).getName());
+					}
+				}else{
+					//放入指定列
+					for(int i=0;i<selectParam.length;i++){
+						boolean flags = false;
+						for(int j=0;j<columns.size();j++){
+							if(columns.get(j).getName().equals(selectParam[i].trim())){
+								selectStr.add(columns.get(j).getName());
+								flags = true;
+							}
+						}
+						if(flags == false)
+						{
+							System.out.println("输入的查询字段在表结构中未找到！");
+							return;
+						}
+					}
+				}
+
 				/* 查询条件 */
 				String[] value;
-				if( param.length == 4 ){
+				if( param.length > 3 ){
 					value = param[3].split("=");
 				}else {
 					value = null;
@@ -144,13 +169,31 @@ public class Execute {
 				if(value == null){
 					results = tree.SelectAll();
 				}else{
-					if(value[0].equals("id"))
+					if(value[0].trim().equals("id"))
 					{
-						String result = tree.SelectByKey(Integer.parseInt(value[1]));
+						String result = tree.SelectByKey(Integer.parseInt(value[1].trim()));
 						results.add(result);
 					}else{
 						results = tree.SelectByOther(value[0],value[1]);
 					}
+				}
+
+				if(results == null)
+				{
+					System.out.print("未找到结果！");
+					return;
+				}
+
+				/* 处理结果,将列与数据相对应 */
+				List<Map<String,String>> resultMap = new ArrayList<>();
+				for(int i=0;i<results.size();i++){
+					Map<String,String> map = new HashMap<>();
+					String[] result = results.get(i).split(",");
+					for(int j=0;j<result.length;j++)
+					{
+						map.put(columns.get(j).getName(),result[j].trim());
+					}
+					resultMap.add(map);
 				}
 
 				/* 输出结果 */
@@ -158,19 +201,17 @@ public class Execute {
 					System.out.println("未找到结果！");
 				}else{
 					/* 输出表结构 */
-					TableSchema schema = tree.getHead().schema;
-					List<Column> columns = schema.getColumns();
-					for(int i=0;i<columns.size();i++){
-						Column column = columns.get(i);
-						System.out.print(column.getName()+ "	");
+					for(int i=0;i<selectStr.size();i++){
+						String colName = selectStr.get(i);
+						System.out.print(colName+ "	");
 					}
 					System.out.println();
 
 					/* 按行输出数据 */
-					for ( int i=0 ;i < results.size(); i++ ){
-						String[] result = results.get(i).split(",");
-						for(int j=0;j<result.length;j++) {
-							System.out.print(result[j]+"	");
+					for ( int i=0 ;i < resultMap.size(); i++ ){
+						Map<String,String> map = resultMap.get(i);
+						for(int j=0;j<selectStr.size();j++){
+							System.out.print(map.get(selectStr.get(j))+"	");
 						}
 						System.out.println();
 					}
