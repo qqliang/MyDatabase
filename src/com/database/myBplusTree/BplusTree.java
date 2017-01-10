@@ -42,7 +42,7 @@ public class BplusTree{
      * 2、创建根节点
      * 3、树的head指针指向根节点
      */
-    public BplusTree(int order,Database db, TableSchema schema, String sql) {
+    public BplusTree(int order,Database db, TableSchema schema) {
         /* 创建一个新的B+树 */
         if (order < 3) {
             System.out.print("树阶必须大于2！");
@@ -50,7 +50,7 @@ public class BplusTree{
         }
         this.order = order;
         this.schema = schema;
-        root = new BplusNode(db.getPager(), PageType.TABLE_LEAF, schema, sql);
+        root = new BplusNode(db.getPager(), PageType.TABLE_LEAF, schema);
         root.page.setOrder((byte)order);
         root.page.setMaxRowID(0);			//设置目前最大rowid为0
         this.maxRowid = 0;
@@ -112,7 +112,7 @@ public class BplusTree{
     }
 
     public String get(Integer key) {
-        return root.get(key);
+        return root.get(key,this);
     }
 
     public String remove(Integer key) {
@@ -121,6 +121,7 @@ public class BplusTree{
 
     public void insertOrUpdate(Integer key, String value) {
         root.insertOrUpdate(key, value, this);
+        root.flushPage( root.entries, root );
     }
 
 
@@ -153,7 +154,7 @@ public class BplusTree{
      */
     public List<String> SelectByOther(String param, String value){
         List<String> results = null;
-        BplusNode tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()), schema, head.sql);
+        BplusNode tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()), schema);
         while(tempNode != null){
             for(int i=0;i < tempNode.entries.size();i++){
                 String tempStr = tempNode.entries.get(i).getValue();
@@ -162,7 +163,7 @@ public class BplusTree{
                     results.add(tempStr);
                 }
             }// end for
-            tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()), schema, head.sql);
+            tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()), schema);
         }// end while
         return results;
     }

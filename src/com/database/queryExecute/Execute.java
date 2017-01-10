@@ -75,8 +75,9 @@ public class Execute {
 			}else{
 				String schemaSQL = param[2].substring(param[2].indexOf('[')+1,param[2].indexOf(']'));
 				TableSchema schema = TableSchema.buildTableSchema(schemaSQL);
-				BplusTree tree = new BplusTree(3,db,schema, schemaSQL);
+				BplusTree tree = new BplusTree(3,db,schema);
 				db.addTableTree(param[1], sql, tree);
+				System.out.println("创建表"+param[1]+"成功");
 			}
 			break;
 		case 22:

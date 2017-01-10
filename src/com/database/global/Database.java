@@ -167,8 +167,8 @@ public class Database {
 					}
 
 					//构建B+树
-					BplusNode root = new BplusNode(pager, page, rootSchema, schemaSQL);
-					BplusNode head = new BplusNode(pager,pager.aquirePage(page.getHead()), schema, schemaSQL);
+					BplusNode root = new BplusNode(pager, page, rootSchema);
+					BplusNode head = new BplusNode(pager,pager.aquirePage(page.getHead()), schema);
 					BplusTree tree = new BplusTree(page.getOrder(),this,root,head, schema);
 
 					//存储映射关系
