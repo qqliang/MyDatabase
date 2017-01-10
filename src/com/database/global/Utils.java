@@ -56,7 +56,7 @@ public class Utils {
     }
 
     /**
-     * 填充变长的整型值
+     * 填充变长的整型值（可以是short 、int）
      * @param value 所要填充的整型值
      * @param bytes
      * @param start
@@ -83,6 +83,35 @@ public class Utils {
             bytes[start + 2] = (byte)(value & 0x7f);
             return 3;
         }
+        //4B
+        if( (value & ~0x0fffffff) == 0 ){
+            bytes[start] = (byte)((value>>21) | 0x80);
+            bytes[start + 1] = (byte)((value>>14) | 0x80);
+            bytes[start + 2] = (byte)((value>>7) | 0x80);
+            bytes[start + 3] = (byte)(value & 0x7f);
+            return 4;
+        }else{
+            bytes[start] = (byte)((value>>28) | 0x80);
+            bytes[start + 1] = (byte)((value>>21) | 0x80);
+            bytes[start + 2] = (byte)((value>>14) | 0x80);
+            bytes[start + 3] = (byte)((value>>7) | 0x80);
+            bytes[start + 4] = (byte)(value & 0x7f);
+            return 5;
+
+        }
+    }
+    /**
+     * 填充变长的长整型值
+     * @param value 所要填充的整型值
+     * @param bytes
+     * @param start
+     * @return  该值实际长度,返回-1表示错误(值已经超出32bit整型范围)
+     */
+    public static int fillVarLong(int value, byte[] bytes, int start){
+        if(value > Long.MAX_VALUE)
+            return -1;
+        if(value <= Integer.MAX_VALUE)
+            return fillVarInt(value, bytes, start);
         //4B
         if( (value & ~0x0fffffff) == 0 ){
             bytes[start] = (byte)((value>>21) | 0x80);
@@ -205,6 +234,38 @@ public class Utils {
 
         return shortValue;
     }
+
+    /**
+     * 加载变长short类型的整型数
+     * @param data
+     * @param start
+     * @return
+     */
+    public static short loadVarShortFromBytes(byte[] data, int start){
+        assert(start < data.length);
+
+        short shortValue = 0;
+        //poses 1 B
+        if((data[start] & 0x80) == 0 ){
+            shortValue = data[start];
+            return shortValue;
+        }
+        //poses 2 B
+        if((data[start + 1] & 0x80) == 0 ){
+            shortValue |= ((data[start] & 0x7f) << 7) | data[1];
+            return shortValue;
+        }
+        //poses 3 B
+        if((data[start + 2] & 0x80) == 0 ){
+            shortValue |= ((data[start] & 0x7f) << 14)
+                    | ((data[start + 1] & 0x7f) << 7)
+                    | data[start + 2];
+            return shortValue;
+        }else{
+            System.out.println("ERROR: Utils.loadVarShortFromBytes()");
+            return -1;
+        }
+    }
     public static long loadLongFromBytes(byte[] data, int start){
         assert(start + 8 > data.length);
 
@@ -228,7 +289,6 @@ public class Utils {
         for(int i = 0; i< len; i++){
             strBytes[i] = data[start + i];
         }
-
         return  new String(strBytes);
     }
 }

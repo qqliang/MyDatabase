@@ -70,6 +70,17 @@ public class Pager {
 		pCache.makeDirty(page);
 //		pCache.printStatus();
 	}
+	/**
+	 * 像指定页面中写入数据，即刷新整个页面数据
+	 * @param page 要写入数据的页号
+	 * @param data	要写入的数据，entry中的byte[]可以通过Record的getBytes方法可以简单得到
+	 */
+	public void writeData(Page page, List<Map.Entry<Integer, byte[]>> data){
+//		Page page = aquirePage(pgno);
+		page.fillData(data);
+		pCache.makeDirty(page);
+//		pCache.printStatus();
+	}
 
 	/**
 	 * 	提交一个事务，将缓存中的数据写入磁盘
