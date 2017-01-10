@@ -22,6 +22,7 @@ import com.database.global.Database;
 import com.database.global.PageType;
 import com.database.pager.TableSchema;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BplusTree{
@@ -142,18 +143,47 @@ public class BplusTree{
     public String SelectByKey(Integer key) {
         System.out.println("开始查询！");
         String result = get(key);
-        if (result == null) {
-            return "未找到数据";
-        }else{
-            return result;
+
+        return result;
+    }
+
+    /**
+     * 查询所有数据
+     * 1、从头指针开始遍历
+     */
+    public List<String> SelectAll() {
+        System.out.println("开始查询！");
+
+        List<String> results = new ArrayList<>();
+
+        BplusNode tempNode;
+        if(head.page.getPgno() != 0){
+
+            tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getPgno()), schema);
+
+            while(tempNode != null){
+                for(int i=0;i < tempNode.entries.size();i++){
+                    String tempStr = tempNode.entries.get(i).getValue();
+                    results.add(tempStr);
+                }// end for
+                if(tempNode.page.getpNext() != 0){
+                    tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(tempNode.page.getpNext()), schema);
+                }else{
+                    tempNode = null;
+                }
+            }//end while
         }
+
+        return results;
     }
 
     /**
      * 查询其他字段
      */
     public List<String> SelectByOther(String param, String value){
-        List<String> results = null;
+        System.out.println("开始查询！");
+
+        List<String> results = new ArrayList<>();
         BplusNode tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()), schema);
         while(tempNode != null){
             for(int i=0;i < tempNode.entries.size();i++){
@@ -165,6 +195,7 @@ public class BplusTree{
             }// end for
             tempNode = new BplusNode(db.getPager(),db.getPager().aquirePage(head.page.getpNext()), schema);
         }// end while
+
         return results;
     }
 

@@ -16,7 +16,7 @@ public class BplusNode {
 
     Pager pager ;
     public Page page;
-    TableSchema schema;
+    public TableSchema schema;
 
     private BplusNode parent;         //父节点
     private BplusNode previous;       //叶子节点的前一个节点

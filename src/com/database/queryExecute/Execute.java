@@ -1,9 +1,11 @@
 package com.database.queryExecute;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.database.global.*;
 import com.database.myBplusTree.BplusTree;
+import com.database.pager.Column;
 import com.database.pager.Page;
 import com.database.pager.Pager;
 import com.database.pager.TableSchema;
@@ -112,18 +114,62 @@ public class Execute {
 			if(db.getStat() != 1){
 				System.out.println("未打开数据库，请先打开数据库!");
 			}else{
-				String selectParam = param[1];		//查询字段
-				String value[] =param[3].split("=");//查询条件
-				String tableName = param[2];		//查询表名
+				/* 查询字段 */
+				String selectParam = param[1];
+
+				/* 查询表名 */
+				String tableName = param[2];
 				BplusTree tree = db.getTableTreeByName(tableName);
 
-				List<String> results = null;
-				if(value[0].equals("id"))
-				{
-					String result = tree.SelectByKey(Integer.parseInt(value[1]));
-					results.add(result);
+				/* 查询条件 */
+				String[] value;
+				if( param.length == 4 ){
+					value = param[3].split("=");
+				}else {
+					value = null;
+				}
+
+				/* 查询结果 */
+				/**
+				 * 1、没有查询条件
+				 * 2、有查询条件
+				 * 		2.1 查询条件为主键
+				 * 		2.2 查询条件为其他
+				 */
+				List<String> results = new ArrayList<>();
+				if(value == null){
+					results = tree.SelectAll();
 				}else{
-					results = tree.SelectByOther(value[0],value[1]);
+					if(value[0].equals("id"))
+					{
+						String result = tree.SelectByKey(Integer.parseInt(value[1]));
+						results.add(result);
+					}else{
+						results = tree.SelectByOther(value[0],value[1]);
+					}
+				}
+
+				/* 输出结果 */
+				if (results.size()==0){
+					System.out.println("未找到结果！");
+				}else{
+					/* 输出表结构 */
+					TableSchema schema = tree.getHead().schema;
+					List<Column> columns = schema.getColumns();
+					for(int i=0;i<columns.size();i++){
+						Column column = columns.get(i);
+						System.out.print(column.getName()+ "	");
+					}
+					System.out.println();
+
+					/* 按行输出数据 */
+					for ( int i=0 ;i < results.size(); i++ ){
+						String[] result = results.get(i).split(",");
+						for(int j=0;j<result.length;j++) {
+							System.out.print(result[j]+"	");
+						}
+						System.out.println();
+					}
 				}
 			}
 			break;
