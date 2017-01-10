@@ -73,8 +73,9 @@ public class Execute {
 			if(db.getStat() != 1){
 				System.out.println("未打开数据库，请先打开数据库!");
 			}else{
-				TableSchema schema = TableSchema.buildTableSchema(param[2].substring(param[2].indexOf('[')+1,param[2].indexOf(']')));
-				BplusTree tree = new BplusTree(3,db,schema);
+				String schemaSQL = param[2].substring(param[2].indexOf('[')+1,param[2].indexOf(']'));
+				TableSchema schema = TableSchema.buildTableSchema(schemaSQL);
+				BplusTree tree = new BplusTree(3,db,schema, schemaSQL);
 				db.addTableTree(param[1], sql, tree);
 			}
 			break;

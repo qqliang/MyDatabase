@@ -157,7 +157,8 @@ public class Database {
 					//获取表结构
 					String sql = value[1].trim().replace("#",",");
 					String result[] = parser.parser(sql);
-					TableSchema schema = TableSchema.buildTableSchema(result[2].substring(result[2].indexOf('[')+1,result[2].indexOf(']')));
+					String schemaSQL = result[2].substring(result[2].indexOf('[')+1,result[2].indexOf(']'));
+					TableSchema schema = TableSchema.buildTableSchema(schemaSQL);
 					TableSchema rootSchema;
 					if(page.getPageType()==1){
 						rootSchema = TableSchema.getTreeInternalSchema();
@@ -166,8 +167,8 @@ public class Database {
 					}
 
 					//构建B+树
-					BplusNode root = new BplusNode(pager, page, rootSchema);
-					BplusNode head = new BplusNode(pager,pager.aquirePage(page.getHead()), schema);
+					BplusNode root = new BplusNode(pager, page, rootSchema, schemaSQL);
+					BplusNode head = new BplusNode(pager,pager.aquirePage(page.getHead()), schema, schemaSQL);
 					BplusTree tree = new BplusTree(page.getOrder(),this,root,head, schema);
 
 					//存储映射关系
